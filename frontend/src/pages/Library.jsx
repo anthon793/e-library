@@ -11,6 +11,8 @@ const GOOGLE_SUBJECT_BY_SLUG = {
   'data-science': 'data science',
 };
 
+const GOOGLE_FALLBACK_QUERY = 'ai';
+
 export default function Library() {
   const { slug } = useParams();
   const [books, setBooks] = useState([]);
@@ -42,17 +44,13 @@ export default function Library() {
   useEffect(() => {
     const categorySlug = activeCat?.slug;
     const googleSubject = GOOGLE_SUBJECT_BY_SLUG[categorySlug || ''];
-
-    if (!googleSubject) {
-      setGoogleBooks([]);
-      setGoogleLoading(false);
-      return;
-    }
+    const query = googleSubject || GOOGLE_FALLBACK_QUERY;
+    const field = googleSubject ? 'subject' : 'all';
 
     let cancelled = false;
     setGoogleLoading(true);
 
-    searchGoogleBooksWithFilter(googleSubject, 'subject', 12, true)
+    searchGoogleBooksWithFilter(query, field, 12, false)
       .then((items) => {
         if (!cancelled) {
           setGoogleBooks(items || []);
@@ -118,12 +116,16 @@ export default function Library() {
         </div>
       )}
 
-      {activeCat && GOOGLE_SUBJECT_BY_SLUG[activeCat.slug] ? (
+      {googleLoading || googleBooks.length > 0 ? (
         <div style={{ marginTop: 28 }}>
           <div className="page-header" style={{ marginBottom: 10 }}>
             <div>
-              <h1 style={{ fontSize: '1.3rem' }}>Google PDF Preview Books</h1>
-              <p className="page-subtitle">PDF-viewable previews for {activeCat.name}, opened inside the app with Google Embedded Viewer.</p>
+              <h1 style={{ fontSize: '1.3rem' }}>Google Preview Books</h1>
+              <p className="page-subtitle">
+                {activeCat
+                  ? `Preview books for ${activeCat.name} from Google Books.`
+                  : 'Preview books from Google Books while your internal library is being populated.'}
+              </p>
             </div>
           </div>
 
@@ -136,8 +138,8 @@ export default function Library() {
           ) : (
             <div className="empty-state" style={{ marginTop: 8 }}>
               <BookOpen size={42} strokeWidth={1} />
-              <h3>No Google PDF previews yet</h3>
-              <p>Try again later or use Search to find more Google Books in this category.</p>
+              <h3>No Google previews yet</h3>
+              <p>Try again later or use Search to find more Google Books.</p>
             </div>
           )}
         </div>
