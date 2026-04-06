@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timezone
 from urllib.parse import parse_qs, urlparse
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -231,9 +231,10 @@ def cleanup_offtopic_books(
     current_user: User = Depends(require_lecturer),
     db: Session = Depends(get_db),
 ):
-    removed = cleanup_offtopic_google_books(db, category)
+    matched, removed = cleanup_offtopic_google_books(db, category)
     return {
         "category": normalize_category(category) or category,
+        "matched": matched,
         "removed": removed,
     }
 
@@ -244,9 +245,10 @@ async def cleanup_preview_unavailable_books(
     current_user: User = Depends(require_lecturer),
     db: Session = Depends(get_db),
 ):
-    removed = await cleanup_unavailable_preview_google_books(db, category)
+    matched, removed = await cleanup_unavailable_preview_google_books(db, category)
     return {
         "category": normalize_category(category) or category,
+        "matched": matched,
         "removed": removed,
     }
 
@@ -411,7 +413,7 @@ def download_book(book_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{book_id}/stream")
-async def stream_book_pdf(book_id: int, db: Session = Depends(get_db)):
+async def stream_book_pdf(book_id: int, request: Request, db: Session = Depends(get_db)):
     book = db.query(HybridBook).filter(HybridBook.id == book_id).first()
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -431,16 +433,21 @@ async def stream_book_pdf(book_id: int, db: Session = Depends(get_db)):
     if not book.download_link:
         raise HTTPException(status_code=404, detail="No PDF link available")
 
+    upstream_headers = {
+        "Accept": "application/pdf,*/*;q=0.8",
+        "User-Agent": "Academic-E-Library/1.0",
+    }
+    range_header = request.headers.get("range")
+    if range_header:
+        upstream_headers["Range"] = range_header
+
     client = httpx.AsyncClient(timeout=httpx.Timeout(timeout=60.0, connect=15.0), follow_redirects=True)
     try:
         upstream = await client.send(
             client.build_request(
                 "GET",
                 book.download_link,
-                headers={
-                    "Accept": "application/pdf,*/*;q=0.8",
-                    "User-Agent": "Academic-E-Library/1.0",
-                },
+                headers=upstream_headers,
             ),
             stream=True,
         )
@@ -470,10 +477,11 @@ async def stream_book_pdf(book_id: int, db: Session = Depends(get_db)):
         or ".pdf" in final_url
     )
 
-    stream_iter = upstream.aiter_bytes()
+    stream_iter = upstream.aiter_bytes(chunk_size=256 * 1024)
     first_chunk = b""
 
-    if not looks_like_pdf_by_headers:
+    # For byte-range responses, first bytes may not start with "%PDF-".
+    if not looks_like_pdf_by_headers and not range_header:
         try:
             first_chunk = await anext(stream_iter)
         except StopAsyncIteration:
@@ -488,7 +496,7 @@ async def stream_book_pdf(book_id: int, db: Session = Depends(get_db)):
             raise HTTPException(status_code=422, detail="No embeddable PDF is available for this book")
 
     headers = {}
-    for h in ("content-length", "accept-ranges", "cache-control", "etag", "last-modified"):
+    for h in ("content-length", "content-range", "accept-ranges", "cache-control", "etag", "last-modified"):
         if upstream.headers.get(h):
             headers[h] = upstream.headers[h]
 
@@ -504,6 +512,7 @@ async def stream_book_pdf(book_id: int, db: Session = Depends(get_db)):
 
     return StreamingResponse(
         _iter_pdf_bytes(),
+        status_code=upstream.status_code,
         media_type=upstream.headers.get("content-type") or "application/pdf",
         headers=headers,
         background=BackgroundTask(_cleanup),

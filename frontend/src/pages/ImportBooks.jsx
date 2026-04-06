@@ -120,7 +120,7 @@ export default function ImportBooks() {
     setCleanupLoading(true);
     try {
       const result = await cleanupOfftopicBooks(categorySlug);
-      alert(`Cleanup complete. Removed ${result.removed || 0} off-topic books.`);
+      alert(`Cleanup complete. Matched ${result.matched || 0} books and removed ${result.removed || 0} off-topic books.`);
     } catch {
       alert('Failed to clean off-topic books.');
     } finally {
@@ -141,7 +141,7 @@ export default function ImportBooks() {
     setPreviewCleanupLoading(true);
     try {
       const result = await cleanupPreviewUnavailableBooks(categorySlug);
-      alert(`Preview cleanup complete. Removed ${result.removed || 0} books.`);
+      alert(`Preview cleanup complete. Matched ${result.matched || 0} books and removed ${result.removed || 0}.`);
     } catch {
       alert('Failed to clean preview-unavailable books.');
     } finally {

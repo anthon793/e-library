@@ -4,11 +4,12 @@ import logging
 from datetime import datetime, timezone
 from urllib.parse import parse_qs, urlparse
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app import crud
 from app.models.hybrid_book import HybridBook
-from app.services.category_policy import normalize_category
+from app.services.category_policy import normalize_category, slug_from_category
 from app.services.google_books import fetch_google_book_volume, search_google_books
 
 logger = logging.getLogger("hybrid_importer")
@@ -66,18 +67,26 @@ def is_category_relevant(candidate: dict, normalized_category: str, query: str) 
     return category_match or query_match
 
 
-def cleanup_offtopic_google_books(db: Session, category: str) -> int:
+def cleanup_offtopic_google_books(db: Session, category: str) -> tuple[int, int]:
     normalized_category = normalize_category(category)
     if not normalized_category:
-        return 0
+        return 0, 0
+
+    category_slug = slug_from_category(category) or str(category).strip().lower().replace("_", "-")
 
     books = (
         db.query(HybridBook)
-        .filter(HybridBook.category.ilike(f"%{normalized_category}%"))
+        .filter(
+            or_(
+                HybridBook.category.ilike(f"%{normalized_category}%"),
+                HybridBook.category.ilike(f"%{category_slug}%"),
+            )
+        )
         .filter(HybridBook.source.ilike("%google books%"))
         .all()
     )
 
+    matched = len(books)
     removed = 0
     for book in books:
         candidate = {
@@ -91,21 +100,29 @@ def cleanup_offtopic_google_books(db: Session, category: str) -> int:
 
     if removed:
         db.commit()
-    return removed
+    return matched, removed
 
 
-async def cleanup_unavailable_preview_google_books(db: Session, category: str) -> int:
+async def cleanup_unavailable_preview_google_books(db: Session, category: str) -> tuple[int, int]:
     normalized_category = normalize_category(category)
     if not normalized_category:
-        return 0
+        return 0, 0
+
+    category_slug = slug_from_category(category) or str(category).strip().lower().replace("_", "-")
 
     books = (
         db.query(HybridBook)
-        .filter(HybridBook.category.ilike(f"%{normalized_category}%"))
+        .filter(
+            or_(
+                HybridBook.category.ilike(f"%{normalized_category}%"),
+                HybridBook.category.ilike(f"%{category_slug}%"),
+            )
+        )
         .filter(HybridBook.source.ilike("%google books%"))
         .all()
     )
 
+    matched = len(books)
     removed = 0
     for book in books:
         volume_id = ""
@@ -139,7 +156,7 @@ async def cleanup_unavailable_preview_google_books(db: Session, category: str) -
 
     if removed:
         db.commit()
-    return removed
+    return matched, removed
 
 
 async def fetch_google_metadata(query: str, max_results_per_source: int, field: str) -> list[dict]:

@@ -8,39 +8,35 @@ export default function Library() {
   const { slug } = useParams();
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const [activeCat, setActiveCat] = useState(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const LIMIT = 20;
 
   useEffect(() => {
-    getArchiveCategories().then(setCategories).catch(() => {});
+    getArchiveCategories()
+      .then(setCategories)
+      .catch(() => {})
+      .finally(() => setCategoriesLoaded(true));
   }, []);
 
   useEffect(() => {
+    if (!categoriesLoaded) return;
+
     setLoading(true);
     setPage(1);
-    if (slug && categories.length) {
-      const cat = categories.find((c) => c.slug === slug);
-      setActiveCat(cat || null);
-      getBooks(0, LIMIT, cat?.slug || null)
-        .then(setBooks)
-        .catch((err) => {
-          console.error('Failed to load category books:', err);
-          setBooks([]);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setActiveCat(null);
-      getBooks(0, LIMIT)
-        .then(setBooks)
-        .catch((err) => {
-          console.error('Failed to load books:', err);
-          setBooks([]);
-        })
-        .finally(() => setLoading(false));
-    }
-  }, [slug, categories]);
+    const cat = slug ? categories.find((c) => c.slug === slug) : null;
+    setActiveCat(cat || null);
+
+    getBooks(0, LIMIT, cat?.slug || null)
+      .then(setBooks)
+      .catch((err) => {
+        console.error('Failed to load books:', err);
+        setBooks([]);
+      })
+      .finally(() => setLoading(false));
+  }, [slug, categories, categoriesLoaded]);
 
   const loadPage = (p) => {
     setLoading(true);
