@@ -5,7 +5,7 @@ import { getArchiveCategories, uploadBook } from '../api/client';
 import { Upload as UploadIcon, CheckCircle } from 'lucide-react';
 
 export default function Upload() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,12 +14,19 @@ export default function Upload() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!user || (user.role !== 'lecturer' && user.role !== 'admin')) {
       navigate('/login');
       return;
     }
     getArchiveCategories().then(setCategories).catch(() => {});
-  }, [user]);
+  }, [user, authLoading, navigate]);
+
+  if (authLoading) {
+    return <div className="page-header"><h1>Loading...</h1></div>;
+  }
 
   const handlePdfUpload = async (e) => {
     e.preventDefault();

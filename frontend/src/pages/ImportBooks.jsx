@@ -5,7 +5,7 @@ import { getArchiveCategories, triggerAutoImport, getAutoImportStatus, verifyImp
 import { Search, Globe, CheckCircle, BookOpen } from 'lucide-react';
 
 export default function ImportBooks() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [categories, setCategories] = useState([]);
@@ -21,12 +21,19 @@ export default function ImportBooks() {
   const [previewCleanupLoading, setPreviewCleanupLoading] = useState(false);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!user || (user.role !== 'lecturer' && user.role !== 'admin')) {
       navigate('/login');
       return;
     }
     getArchiveCategories().then(setCategories).catch(() => {});
-  }, [user]);
+  }, [user, authLoading, navigate]);
+
+  if (authLoading) {
+    return <div className="page-header"><h1>Loading...</h1></div>;
+  }
 
   useEffect(() => {
     if (!job?.job_id) return;

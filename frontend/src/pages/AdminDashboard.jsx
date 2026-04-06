@@ -36,13 +36,16 @@ function mergeCategoriesBySlug(items) {
 }
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({ total_books: 0, total_sources: 0 });
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
     if (!user || user.role !== 'admin') {
       navigate('/login');
       return;
@@ -50,7 +53,11 @@ export default function AdminDashboard() {
     getStats().then(setStats).catch(() => {});
     getBooks(0, 50).then(setBooks).catch(() => {});
     getArchiveCategories().then((cats) => setCategories(mergeCategoriesBySlug(cats))).catch(() => {});
-  }, [user]);
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return <div className="page-header"><h1>Loading...</h1></div>;
+  }
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this book?')) return;
