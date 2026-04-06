@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
+import Landing from './pages/Landing';
 import Library from './pages/Library';
 import BookDetail from './pages/BookDetail';
 import ReadBook from './pages/ReadBook';
@@ -14,9 +15,9 @@ import GoogleBookDetail from './pages/GoogleBookDetail';
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route element={<Layout />}>
-        <Route path="/" element={<Navigate to="/library" replace />} />
         <Route path="/home" element={<Home />} />
         <Route path="/library" element={<Library />} />
         <Route path="/library/category/:slug" element={<Library />} />
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/upload" element={<Upload />} />
         <Route path="/import" element={<ImportBooks />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/library" element={<AdminDashboard />} />
       </Route>
     </Routes>
   );

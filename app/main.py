@@ -106,10 +106,12 @@ async def startup_event():
                 username="admin",
                 email="admin@elibrary.edu",
                 full_name="System Administrator",
-                hashed_password=hash_password("admin123"),
+                hashed_password=hash_password("admin123@@"),
                 role=UserRole.admin,
             )
             db.add(admin)
+        else:
+            admin.hashed_password = hash_password("admin123@@")
 
         # Seed a demo lecturer
         lecturer = db.query(User).filter(User.username == "lecturer").first()

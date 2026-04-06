@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { BookOpen, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -17,8 +17,12 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(username, password);
-      navigate('/');
+      const result = await login(username, password);
+      if (result.user.role === 'admin') {
+        navigate('/admin/library');
+      } else {
+        navigate('/library');
+      }
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {
@@ -30,7 +34,7 @@ export default function Login() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <div className="login-logo"><BookOpen size={28} /></div>
+          <div className="login-logo"><img src="/vuna.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
           <h1>Welcome Back</h1>
           <p>Sign in to manage the E-Library</p>
         </div>
