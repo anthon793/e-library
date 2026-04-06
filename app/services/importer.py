@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
+from urllib.parse import parse_qs, urlparse
 
 from sqlalchemy.orm import Session
 
 from app import crud
 from app.models.hybrid_book import HybridBook
 from app.services.category_policy import normalize_category
-from app.services.google_books import search_google_books
+from app.services.google_books import fetch_google_book_volume, search_google_books
 
 logger = logging.getLogger("hybrid_importer")
 
@@ -93,13 +94,61 @@ def cleanup_offtopic_google_books(db: Session, category: str) -> int:
     return removed
 
 
+async def cleanup_unavailable_preview_google_books(db: Session, category: str) -> int:
+    normalized_category = normalize_category(category)
+    if not normalized_category:
+        return 0
+
+    books = (
+        db.query(HybridBook)
+        .filter(HybridBook.category.ilike(f"%{normalized_category}%"))
+        .filter(HybridBook.source.ilike("%google books%"))
+        .all()
+    )
+
+    removed = 0
+    for book in books:
+        volume_id = ""
+        for link in ((book.preview_link or "").strip(), (book.download_link or "").strip()):
+            if not link:
+                continue
+            parsed = urlparse(link)
+            volume_id = parse_qs(parsed.query).get("id", [""])[0]
+            if volume_id:
+                break
+
+        should_remove = False
+        if not volume_id:
+            should_remove = True
+        else:
+            try:
+                payload = await fetch_google_book_volume(volume_id)
+            except Exception:
+                payload = None
+
+            if not payload:
+                should_remove = True
+            else:
+                preview_available = bool(payload.get("preview_available"))
+                embeddable = bool(payload.get("embeddable", payload.get("preview_available")))
+                should_remove = not preview_available or not embeddable
+
+        if should_remove:
+            db.delete(book)
+            removed += 1
+
+    if removed:
+        db.commit()
+    return removed
+
+
 async def fetch_google_metadata(query: str, max_results_per_source: int, field: str) -> list[dict]:
     try:
         return await search_google_books(
             query,
             max_results=max_results_per_source,
             field=field,
-            pdf_only=False,
+            pdf_only=True,
         )
     except Exception as exc:
         logger.warning("google_books_failed err=%s", exc)
@@ -126,9 +175,6 @@ async def import_verified_books(
 
     for candidate in raw_books:
         checked_count += 1
-
-        if not candidate.get("embeddable") and not candidate.get("preview_available"):
-            continue
 
         if not is_category_relevant(candidate, normalized_category, query):
             continue

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getArchiveCategories, triggerAutoImport, getAutoImportStatus, verifyImportedBooks, cleanupOfftopicBooks } from '../api/client';
+import { getArchiveCategories, triggerAutoImport, getAutoImportStatus, verifyImportedBooks, cleanupOfftopicBooks, cleanupPreviewUnavailableBooks } from '../api/client';
 import { Search, Globe, CheckCircle, BookOpen } from 'lucide-react';
 
 export default function ImportBooks() {
@@ -18,6 +18,7 @@ export default function ImportBooks() {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifyResult, setVerifyResult] = useState(null);
   const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [previewCleanupLoading, setPreviewCleanupLoading] = useState(false);
 
   useEffect(() => {
     if (!user || (user.role !== 'lecturer' && user.role !== 'admin')) {
@@ -127,6 +128,27 @@ export default function ImportBooks() {
     }
   };
 
+  const handlePreviewCleanup = async () => {
+    if (!categorySlug) {
+      alert('Select a category first.');
+      return;
+    }
+
+    if (!window.confirm('Remove books where Google Books preview is unavailable for this category?')) {
+      return;
+    }
+
+    setPreviewCleanupLoading(true);
+    try {
+      const result = await cleanupPreviewUnavailableBooks(categorySlug);
+      alert(`Preview cleanup complete. Removed ${result.removed || 0} books.`);
+    } catch {
+      alert('Failed to clean preview-unavailable books.');
+    } finally {
+      setPreviewCleanupLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -169,6 +191,9 @@ export default function ImportBooks() {
       <div style={{ marginTop: 10 }}>
         <button type="button" className="btn btn-secondary btn-sm" onClick={handleCleanup} disabled={cleanupLoading}>
           {cleanupLoading ? 'Cleaning...' : 'Clean Off-Topic Books'}
+        </button>
+        <button type="button" className="btn btn-secondary btn-sm" style={{ marginLeft: 8 }} onClick={handlePreviewCleanup} disabled={previewCleanupLoading}>
+          {previewCleanupLoading ? 'Cleaning...' : 'Remove Preview Unavailable Books'}
         </button>
       </div>
 

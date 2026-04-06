@@ -26,7 +26,7 @@ from app.schemas.hybrid_book import (
 from app.tasks.background_tasks import create_job, get_job, run_auto_import_job
 from app.services.category_policy import normalize_category
 from app.services.google_books import fetch_google_book_volume
-from app.services.importer import cleanup_offtopic_google_books
+from app.services.importer import cleanup_offtopic_google_books, cleanup_unavailable_preview_google_books
 from app.services.revalidator import revalidate_links
 from app.utils.file_storage import save_uploaded_pdf
 
@@ -232,6 +232,19 @@ def cleanup_offtopic_books(
     db: Session = Depends(get_db),
 ):
     removed = cleanup_offtopic_google_books(db, category)
+    return {
+        "category": normalize_category(category) or category,
+        "removed": removed,
+    }
+
+
+@router.post("/cleanup-preview-unavailable")
+async def cleanup_preview_unavailable_books(
+    category: str = Query(..., min_length=1),
+    current_user: User = Depends(require_lecturer),
+    db: Session = Depends(get_db),
+):
+    removed = await cleanup_unavailable_preview_google_books(db, category)
     return {
         "category": normalize_category(category) or category,
         "removed": removed,

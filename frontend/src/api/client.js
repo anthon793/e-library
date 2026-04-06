@@ -252,6 +252,17 @@ export async function cleanupOfftopicBooks(category) {
   return data;
 }
 
+export async function cleanupPreviewUnavailableBooks(category) {
+  const params = new URLSearchParams({ category });
+  const res = await fetch(`${HYBRID_BASE}/cleanup-preview-unavailable?${params.toString()}`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Failed to clean preview-unavailable books');
+  return data;
+}
+
 export async function getAutoImportStatus(jobId) {
   const res = await fetch(`${HYBRID_BASE}/auto-import/${encodeURIComponent(jobId)}`, {
     credentials: 'include',
