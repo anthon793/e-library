@@ -241,6 +241,17 @@ export async function triggerAutoImport(query, category, field = 'all', maxResul
   return data;
 }
 
+export async function cleanupOfftopicBooks(category) {
+  const params = new URLSearchParams({ category });
+  const res = await fetch(`${HYBRID_BASE}/cleanup-offtopic?${params.toString()}`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Failed to clean off-topic books');
+  return data;
+}
+
 export async function getAutoImportStatus(jobId) {
   const res = await fetch(`${HYBRID_BASE}/auto-import/${encodeURIComponent(jobId)}`, {
     credentials: 'include',

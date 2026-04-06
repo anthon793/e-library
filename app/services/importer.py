@@ -13,6 +13,86 @@ from app.services.google_books import search_google_books
 logger = logging.getLogger("hybrid_importer")
 
 
+CATEGORY_KEYWORDS = {
+    "Cybersecurity": {
+        "cybersecurity", "cyber security", "information security", "network security", "application security",
+        "cloud security", "ethical hacking", "penetration testing", "pentest", "vulnerability",
+        "malware", "ransomware", "incident response", "digital forensics", "cryptography",
+        "authentication", "authorization", "siem", "soc", "threat", "firewall", "zero trust",
+    },
+    "Data Science": {
+        "data science", "data analysis", "analytics", "statistics", "statistical", "machine learning",
+        "data mining", "predictive", "regression", "classification", "clustering", "feature engineering",
+        "visualization", "python", "pandas", "numpy", "scikit", "big data", "etl",
+    },
+    "Artificial Intelligence": {
+        "artificial intelligence", "ai", "machine learning", "deep learning", "neural network",
+        "nlp", "natural language", "computer vision", "reinforcement learning", "transformer",
+        "llm", "generative", "expert systems", "knowledge representation", "reasoning",
+    },
+}
+
+GLOBAL_REJECT_KEYWORDS = {
+    "shakespeare", "hamlet", "julius caesar", "twelfth night", "taming of the shrew",
+    "poetry", "novel", "romance", "drama", "play", "literature", "sonnets",
+}
+
+
+def _normalized_text(*parts: str) -> str:
+    return " ".join(str(p or "").strip().lower() for p in parts if p)
+
+
+def is_category_relevant(candidate: dict, normalized_category: str, query: str) -> bool:
+    title = candidate.get("title", "")
+    description = candidate.get("description", "")
+    categories = candidate.get("categories", [])
+    category_text = ", ".join(categories) if isinstance(categories, list) else str(categories or "")
+    blob = _normalized_text(title, description, category_text)
+
+    if not blob:
+        return False
+
+    if any(token in blob for token in GLOBAL_REJECT_KEYWORDS):
+        return False
+
+    allowed = CATEGORY_KEYWORDS.get(normalized_category, set())
+    if not allowed:
+        return True
+
+    query_tokens = [t.strip().lower() for t in str(query or "").split() if len(t.strip()) >= 3]
+    query_match = any(tok in blob for tok in query_tokens) if query_tokens else True
+    category_match = any(keyword in blob for keyword in allowed)
+    return category_match or query_match
+
+
+def cleanup_offtopic_google_books(db: Session, category: str) -> int:
+    normalized_category = normalize_category(category)
+    if not normalized_category:
+        return 0
+
+    books = (
+        db.query(HybridBook)
+        .filter(HybridBook.category.ilike(f"%{normalized_category}%"))
+        .filter(HybridBook.source.ilike("%google books%"))
+        .all()
+    )
+
+    removed = 0
+    for book in books:
+        candidate = {
+            "title": book.title,
+            "description": book.description,
+            "categories": [book.category or ""],
+        }
+        if not is_category_relevant(candidate, normalized_category, ""):
+            db.delete(book)
+            removed += 1
+
+    if removed:
+        db.commit()
+    return removed
+
+
 async def fetch_google_metadata(query: str, max_results_per_source: int, field: str) -> list[dict]:
     try:
         return await search_google_books(
@@ -48,6 +128,9 @@ async def import_verified_books(
         checked_count += 1
 
         if not candidate.get("embeddable") and not candidate.get("preview_available"):
+            continue
+
+        if not is_category_relevant(candidate, normalized_category, query):
             continue
 
         title = candidate.get("title", "Unknown Title")

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getArchiveCategories, triggerAutoImport, getAutoImportStatus, verifyImportedBooks } from '../api/client';
+import { getArchiveCategories, triggerAutoImport, getAutoImportStatus, verifyImportedBooks, cleanupOfftopicBooks } from '../api/client';
 import { Search, Globe, CheckCircle, BookOpen } from 'lucide-react';
 
 export default function ImportBooks() {
@@ -17,6 +17,7 @@ export default function ImportBooks() {
   const [status, setStatus] = useState(null);
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifyResult, setVerifyResult] = useState(null);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
 
   useEffect(() => {
     if (!user || (user.role !== 'lecturer' && user.role !== 'admin')) {
@@ -62,7 +63,7 @@ export default function ImportBooks() {
       `Query: ${query.trim()}`,
       `Field: ${field}`,
       `Category: ${selectedCategory?.name || categorySlug}`,
-      `Max results per source: ${Number(maxResultsPerSource) || 8}`,
+      `Max results: ${Number(maxResultsPerSource) || 8}`,
       'This will import Google Books only and add the books to the library with the selected category tag.',
     ].join('\n');
 
@@ -105,6 +106,27 @@ export default function ImportBooks() {
     }
   };
 
+  const handleCleanup = async () => {
+    if (!categorySlug) {
+      alert('Select a category first.');
+      return;
+    }
+
+    if (!window.confirm('Remove off-topic Google books from this category?')) {
+      return;
+    }
+
+    setCleanupLoading(true);
+    try {
+      const result = await cleanupOfftopicBooks(categorySlug);
+      alert(`Cleanup complete. Removed ${result.removed || 0} off-topic books.`);
+    } catch {
+      alert('Failed to clean off-topic books.');
+    } finally {
+      setCleanupLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -132,7 +154,7 @@ export default function ImportBooks() {
       </div>
 
       <div className="form-group" style={{ maxWidth: 280, marginBottom: 16 }}>
-        <label>Max Results Per Source</label>
+        <label>Max Results</label>
         <input type="number" min="1" max="30" value={maxResultsPerSource} onChange={(e) => setMaxResultsPerSource(e.target.value)} />
       </div>
 
@@ -143,6 +165,12 @@ export default function ImportBooks() {
         </div>
         <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Importing...' : 'Start Google Import'}</button>
       </form>
+
+      <div style={{ marginTop: 10 }}>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={handleCleanup} disabled={cleanupLoading}>
+          {cleanupLoading ? 'Cleaning...' : 'Clean Off-Topic Books'}
+        </button>
+      </div>
 
       {status ? (
         <div className="card" style={{ padding: 16, marginTop: 16 }}>
