@@ -1,25 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getBooks, getArchiveCategories, searchGoogleBooksWithFilter } from '../api/client';
+import { getBooks, getArchiveCategories } from '../api/client';
 import BookCard from '../components/BookCard';
-import GoogleBookCard from '../components/GoogleBookCard';
 import { BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
-
-const GOOGLE_SUBJECT_BY_SLUG = {
-  'artificial-intelligence': 'artificial intelligence',
-  cybersecurity: 'cybersecurity',
-  'data-science': 'data science',
-};
-
-const GOOGLE_FALLBACK_QUERY = 'ai';
 
 export default function Library() {
   const { slug } = useParams();
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCat, setActiveCat] = useState(null);
-  const [googleBooks, setGoogleBooks] = useState([]);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const LIMIT = 20;
@@ -40,37 +29,6 @@ export default function Library() {
       getBooks(0, LIMIT).then(setBooks).catch(() => {}).finally(() => setLoading(false));
     }
   }, [slug, categories]);
-
-  useEffect(() => {
-    const categorySlug = activeCat?.slug;
-    const googleSubject = GOOGLE_SUBJECT_BY_SLUG[categorySlug || ''];
-    const query = googleSubject || GOOGLE_FALLBACK_QUERY;
-    const field = googleSubject ? 'subject' : 'all';
-
-    let cancelled = false;
-    setGoogleLoading(true);
-
-    searchGoogleBooksWithFilter(query, field, 12, false)
-      .then((items) => {
-        if (!cancelled) {
-          setGoogleBooks(items || []);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setGoogleBooks([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setGoogleLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeCat?.slug]);
 
   const loadPage = (p) => {
     setLoading(true);
@@ -115,35 +73,6 @@ export default function Library() {
           <p>{activeCat ? 'No books in this category yet.' : 'The library is empty.'}</p>
         </div>
       )}
-
-      {googleLoading || googleBooks.length > 0 ? (
-        <div style={{ marginTop: 28 }}>
-          <div className="page-header" style={{ marginBottom: 10 }}>
-            <div>
-              <h1 style={{ fontSize: '1.3rem' }}>Google Preview Books</h1>
-              <p className="page-subtitle">
-                {activeCat
-                  ? `Preview books for ${activeCat.name} from Google Books.`
-                  : 'Preview books from Google Books while your internal library is being populated.'}
-              </p>
-            </div>
-          </div>
-
-          {googleLoading ? (
-            <div className="loading-center"><div className="spinner" /></div>
-          ) : googleBooks.length > 0 ? (
-            <div className="book-grid">
-              {googleBooks.map((book) => <GoogleBookCard key={book.id} book={book} />)}
-            </div>
-          ) : (
-            <div className="empty-state" style={{ marginTop: 8 }}>
-              <BookOpen size={42} strokeWidth={1} />
-              <h3>No Google previews yet</h3>
-              <p>Try again later or use Search to find more Google Books.</p>
-            </div>
-          )}
-        </div>
-      ) : null}
     </div>
   );
 }

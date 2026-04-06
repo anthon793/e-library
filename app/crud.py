@@ -4,6 +4,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.models.hybrid_book import HybridBook
+from app.services.category_policy import normalize_category
 
 
 def get_duplicate(db: Session, *, title: str, author: str, download_link: str) -> HybridBook | None:
@@ -38,7 +39,8 @@ def list_hybrid_books(
 ):
     query = db.query(HybridBook)
     if category:
-        query = query.filter(HybridBook.category.ilike(f"%{category}%"))
+        normalized_category = normalize_category(category) or category
+        query = query.filter(HybridBook.category.ilike(f"%{normalized_category}%"))
     if author:
         query = query.filter(HybridBook.author.ilike(f"%{author}%"))
     if source:
@@ -60,7 +62,8 @@ def search_hybrid_books(db: Session, q: str, *, skip: int, limit: int, category:
     )
 
     if category:
-        query = query.filter(HybridBook.category.ilike(f"%{category}%"))
+        normalized_category = normalize_category(category) or category
+        query = query.filter(HybridBook.category.ilike(f"%{normalized_category}%"))
 
     total = query.count()
     items = query.order_by(HybridBook.created_at.desc()).offset(skip).limit(limit).all()
