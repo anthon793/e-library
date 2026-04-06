@@ -29,18 +29,18 @@ class ImportJobStatus(BaseModel):
 class HybridBookBase(BaseModel):
     title: str
     author: str
-    description: str
-    category: str
-    cover_image: str
-    preview_link: str
-    download_link: str
-    source: str
-    is_verified: bool
-    file_size: int
-    publisher: str
-    published_year: str
-    created_at: datetime
-    last_checked: datetime
+    description: Optional[str] = ""
+    category: Optional[str] = ""
+    cover_image: Optional[str] = ""
+    preview_link: Optional[str] = ""
+    download_link: Optional[str] = ""
+    source: Optional[str] = ""
+    is_verified: bool = False
+    file_size: int = 0
+    publisher: Optional[str] = ""
+    published_year: Optional[str] = ""
+    created_at: Optional[datetime] = None
+    last_checked: Optional[datetime] = None
 
 
 class HybridBookResponse(HybridBookBase):

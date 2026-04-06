@@ -23,16 +23,34 @@ export default function Library() {
     if (slug && categories.length) {
       const cat = categories.find((c) => c.slug === slug);
       setActiveCat(cat || null);
-      getBooks(0, LIMIT, cat?.slug || null).then(setBooks).catch(() => {}).finally(() => setLoading(false));
+      getBooks(0, LIMIT, cat?.slug || null)
+        .then(setBooks)
+        .catch((err) => {
+          console.error('Failed to load category books:', err);
+          setBooks([]);
+        })
+        .finally(() => setLoading(false));
     } else {
       setActiveCat(null);
-      getBooks(0, LIMIT).then(setBooks).catch(() => {}).finally(() => setLoading(false));
+      getBooks(0, LIMIT)
+        .then(setBooks)
+        .catch((err) => {
+          console.error('Failed to load books:', err);
+          setBooks([]);
+        })
+        .finally(() => setLoading(false));
     }
   }, [slug, categories]);
 
   const loadPage = (p) => {
     setLoading(true);
-    getBooks((p - 1) * LIMIT, LIMIT, activeCat?.slug || null).then(setBooks).catch(() => {}).finally(() => setLoading(false));
+    getBooks((p - 1) * LIMIT, LIMIT, activeCat?.slug || null)
+      .then(setBooks)
+      .catch((err) => {
+        console.error('Failed to load paged books:', err);
+        setBooks([]);
+      })
+      .finally(() => setLoading(false));
     setPage(p);
   };
 
