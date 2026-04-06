@@ -8,7 +8,7 @@ const PAGE_TITLES = {
   '/library': 'Library',
   '/search': 'Library Search',
   '/upload': 'Upload Book',
-  '/import': 'Import from Internet Archive',
+  '/import': 'Import from Google Books',
   '/admin': 'Admin Panel',
 };
 

@@ -105,7 +105,7 @@ export default function Home() {
           <div className="empty-state">
             <BookOpen size={48} strokeWidth={1} />
             <h3>No books yet</h3>
-            <p>Import books from Internet Archive to get started.</p>
+            <p>Import books from Google Books to get started.</p>
           </div>
         )}
       </div>
