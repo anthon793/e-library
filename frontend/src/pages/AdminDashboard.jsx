@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getStats, getBooks, getArchiveCategories, deleteBook as deleteBookApi } from '../api/client';
-import { BookOpen, Users, Layers, Trash2, Eye, Shield, BarChart3, Brain } from 'lucide-react';
+import { BookOpen, Users, Layers, Trash2, Eye, Shield, BarChart3, Brain, Network, Code } from 'lucide-react';
 
 const CATEGORY_ICONS = {
   'cybersecurity': Shield,
   'data-science': BarChart3,
   'artificial-intelligence': Brain,
+  'information-systems': Network,
+  'computer-science': Code,
 };
 
 function mergeCategoriesBySlug(items) {

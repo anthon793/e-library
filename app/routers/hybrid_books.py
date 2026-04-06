@@ -48,6 +48,16 @@ DEFAULT_CATEGORY_META = [
         "slug": "artificial-intelligence",
         "description": "AI, deep learning, and neural networks",
     },
+    {
+        "name": "Information Systems",
+        "slug": "information-systems",
+        "description": "Enterprise systems, MIS, databases, and IT governance",
+    },
+    {
+        "name": "Computer Science",
+        "slug": "computer-science",
+        "description": "Algorithms, data structures, software engineering, and theory of computation",
+    },
 ]
 
 
@@ -97,7 +107,7 @@ def auto_import_books(
 ):
     normalized_category = normalize_category(payload.category)
     if not normalized_category:
-        raise HTTPException(status_code=400, detail="Category must be one of: cybersecurity, data-science, artificial-intelligence")
+        raise HTTPException(status_code=400, detail="Category must be one of: cybersecurity, data-science, artificial-intelligence, information-systems, computer-science")
 
     normalized_field = (payload.field or "all").strip().lower()
     if normalized_field not in {"all", "title", "author", "isbn", "subject"}:
@@ -537,7 +547,7 @@ async def upload_book(
 
     normalized_category = normalize_category(category)
     if not normalized_category:
-        raise HTTPException(status_code=400, detail="Category must be one of: cybersecurity, data-science, artificial-intelligence")
+        raise HTTPException(status_code=400, detail="Category must be one of: cybersecurity, data-science, artificial-intelligence, information-systems")
 
     file_path, file_size = await save_uploaded_pdf(file)
     book = crud.create_hybrid_book(

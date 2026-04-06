@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getBooks, getArchiveCategories, getStats } from '../api/client';
-import { BookOpen, Users, Layers, ArrowRight, Shield, BarChart3, Brain } from 'lucide-react';
+import { BookOpen, Users, Layers, ArrowRight, Shield, BarChart3, Brain, Network, Code } from 'lucide-react';
 import BookCard from '../components/BookCard';
 
 const CATEGORY_ICONS = {
   'cybersecurity': Shield,
   'data-science': BarChart3,
   'artificial-intelligence': Brain,
+  'information-systems': Network,
+  'computer-science': Code,
 };
 
 function mergeCategoriesBySlug(items) {

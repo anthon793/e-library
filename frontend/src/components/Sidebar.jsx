@@ -13,6 +13,8 @@ import {
   Shield,
   BarChart3,
   Brain,
+  Network,
+  Code,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getArchiveCategories } from '../api/client';
@@ -21,6 +23,8 @@ const CATEGORY_ICONS = {
   'cybersecurity': Shield,
   'data-science': BarChart3,
   'artificial-intelligence': Brain,
+  'information-systems': Network,
+  'computer-science': Code,
 };
 
 function canonicalCategorySlug(cat) {
@@ -31,6 +35,8 @@ function canonicalCategorySlug(cat) {
   if (token.includes('cyber')) return 'cybersecurity';
   if (token.includes('data')) return 'data-science';
   if (token.includes('artificial') || token === 'ai') return 'artificial-intelligence';
+  if (token.includes('information') || token.includes('system')) return 'information-systems';
+  if (token.includes('computer') || token === 'cs') return 'computer-science';
 
   return rawSlug;
 }

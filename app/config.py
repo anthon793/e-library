@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ALLOWED_CATEGORY_SLUGS = ("cybersecurity", "data-science", "artificial-intelligence")
+ALLOWED_CATEGORY_SLUGS = ("cybersecurity", "data-science", "artificial-intelligence", "information-systems", "computer-science")
 
 
 class Settings:

@@ -6,6 +6,8 @@ SLUG_TO_NAME = {
     "cybersecurity": "Cybersecurity",
     "data-science": "Data Science",
     "artificial-intelligence": "Artificial Intelligence",
+    "information-systems": "Information Systems",
+    "computer-science": "Computer Science",
 }
 
 ALLOWED_CATEGORY_NAMES = tuple(SLUG_TO_NAME[slug] for slug in ALLOWED_CATEGORY_SLUGS if slug in SLUG_TO_NAME)
@@ -21,6 +23,16 @@ _ALIAS_TO_SLUG = {
     "artificial-intelligence": "artificial-intelligence",
     "ai": "artificial-intelligence",
     "a.i": "artificial-intelligence",
+    "information systems": "information-systems",
+    "information-systems": "information-systems",
+    "information system": "information-systems",
+    "infosystems": "information-systems",
+    "is": "information-systems",
+    "computer science": "computer-science",
+    "computer-science": "computer-science",
+    "cs": "computer-science",
+    "c.s": "computer-science",
+    "computing": "computer-science",
 }
 
 

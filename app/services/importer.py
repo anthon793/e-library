@@ -32,6 +32,17 @@ CATEGORY_KEYWORDS = {
         "nlp", "natural language", "computer vision", "reinforcement learning", "transformer",
         "llm", "generative", "expert systems", "knowledge representation", "reasoning",
     },
+    "Information Systems": {
+        "information systems", "mis", "management information systems", "enterprise systems",
+        "erp", "crm", "business process", "it governance", "systems analysis",
+        "systems design", "database systems", "information management", "is strategy",
+    },
+    "Computer Science": {
+        "computer science", "computing", "algorithms", "data structures", "algorithm design",
+        "software engineering", "programming", "coding", "object oriented", "oop",
+        "design patterns", "refactoring", "complexity", "big-o", "sorting",
+        "graph", "tree", "queue", "stack", "theory of computation", "compiler", "operating system",
+    },
 }
 
 GLOBAL_REJECT_KEYWORDS = {
@@ -118,7 +129,15 @@ async def cleanup_unavailable_preview_google_books(db: Session, category: str) -
                 HybridBook.category.ilike(f"%{category_slug}%"),
             )
         )
-        .filter(HybridBook.source.ilike("%google books%"))
+        .filter(
+            or_(
+                HybridBook.source.ilike("%google%"),
+                HybridBook.preview_link.ilike("%books.google%"),
+                HybridBook.download_link.ilike("%books.google%"),
+                HybridBook.preview_link.ilike("%play.google.com/books%"),
+                HybridBook.download_link.ilike("%play.google.com/books%"),
+            )
+        )
         .all()
     )
 
@@ -148,7 +167,14 @@ async def cleanup_unavailable_preview_google_books(db: Session, category: str) -
             else:
                 preview_available = bool(payload.get("preview_available"))
                 embeddable = bool(payload.get("embeddable", payload.get("preview_available")))
-                should_remove = not preview_available or not embeddable
+                pdf_viewable = bool(payload.get("pdf_viewable", False))
+                viewability = str(payload.get("viewability") or "").strip().upper()
+                should_remove = (
+                    not preview_available
+                    or not embeddable
+                    or not pdf_viewable
+                    or viewability in {"NO_PAGES", "UNKNOWN"}
+                )
 
         if should_remove:
             db.delete(book)

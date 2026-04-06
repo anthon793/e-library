@@ -8,6 +8,8 @@ const SEARCH_FIELDS = [
   { value: 'cybersecurity', label: 'Cybersecurity' },
   { value: 'data-science', label: 'Data Science' },
   { value: 'artificial-intelligence', label: 'Artificial Intelligence' },
+  { value: 'information-systems', label: 'Information Systems' },
+  { value: 'computer-science', label: 'Computer Science' },
 ];
 
 export default function Search() {
@@ -57,7 +59,7 @@ export default function Search() {
     <div className="google-books-search-page">
       <div className="page-header">
         <h1>Library Search</h1>
-        <p className="page-subtitle">Search books from your library and filter by Cybersecurity, Data Science, or Artificial Intelligence</p>
+        <p className="page-subtitle">Search books from your library and filter by Cybersecurity, Data Science, Artificial Intelligence, Information Systems, or Computer Science</p>
       </div>
 
       <form className="search-form" onSubmit={handleSubmit}>

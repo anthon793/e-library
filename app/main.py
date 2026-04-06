@@ -77,6 +77,8 @@ DEFAULT_CATEGORIES = [
     {"name": "Cybersecurity", "slug": "cybersecurity", "description": "Information security, ethical hacking, and network defense", "icon": "🔒"},
     {"name": "Data Science", "slug": "data-science", "description": "Data analysis, statistics, and machine learning", "icon": "📊"},
     {"name": "Artificial Intelligence", "slug": "artificial-intelligence", "description": "AI, deep learning, and neural networks", "icon": "🤖"},
+    {"name": "Information Systems", "slug": "information-systems", "description": "Enterprise systems, MIS, databases, and IT governance", "icon": "🧩"},
+    {"name": "Computer Science", "slug": "computer-science", "description": "Algorithms, data structures, software engineering, and theory of computation", "icon": "💻"},
 ]
 
 
