@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 const PAGE_TITLES = {
   '/': 'Dashboard',
+  '/home': 'Dashboard',
   '/library': 'Library',
   '/search': 'Library Search',
   '/upload': 'Upload Book',

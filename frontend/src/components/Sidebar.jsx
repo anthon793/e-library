@@ -98,8 +98,12 @@ export default function Sidebar({ onNavigate = null }) {
 
       {/* Navigation */}
       <nav className="sidebar-nav">
-        <NavLink to="/home" end onClick={() => onNavigate?.()} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+        <NavLink to="/" end onClick={() => onNavigate?.()} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
           <Home size={18} /> <span>Home</span>
+        </NavLink>
+
+        <NavLink to="/home" end onClick={() => onNavigate?.()} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <LayoutDashboard size={18} /> <span>Dashboard</span>
         </NavLink>
 
         <NavLink to="/library" end onClick={() => onNavigate?.()} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
