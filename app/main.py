@@ -1,8 +1,9 @@
 import os
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
 
@@ -132,3 +133,19 @@ async def startup_event():
 react_build_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 if os.path.exists(react_build_path):
     app.mount("/", StaticFiles(directory=react_build_path, html=True), name="react")
+
+
+@app.exception_handler(404)
+async def spa_fallback_404(request: Request, exc):
+    path = request.url.path
+    api_like_paths = ("/api", "/books", "/docs", "/openapi.json", "/redoc", "/uploads")
+
+    if path.startswith(api_like_paths):
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+    if os.path.exists(react_build_path):
+        index_path = os.path.join(react_build_path, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})

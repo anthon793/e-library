@@ -30,6 +30,24 @@ from app.utils.file_storage import save_uploaded_pdf
 
 router = APIRouter(prefix="/books", tags=["Hybrid Books"])
 
+DEFAULT_CATEGORY_META = [
+    {
+        "name": "Cybersecurity",
+        "slug": "cybersecurity",
+        "description": "Information security, ethical hacking, and network defense",
+    },
+    {
+        "name": "Data Science",
+        "slug": "data-science",
+        "description": "Data analysis, statistics, and machine learning",
+    },
+    {
+        "name": "Artificial Intelligence",
+        "slug": "artificial-intelligence",
+        "description": "AI, deep learning, and neural networks",
+    },
+]
+
 
 def _is_google_books_source(book: HybridBook) -> bool:
     source = (book.source or "").lower()
@@ -134,16 +152,35 @@ def hybrid_categories(db: Session = Depends(get_db)):
         .group_by(HybridBook.category)
         .all()
     )
-    return [
-        {
-            "name": name,
-            "slug": (name or "uncategorized").strip().lower().replace(" ", "-"),
-            "description": "",
-            "book_count": int(count),
-        }
+
+    counts_by_slug = {
+        (name or "").strip().lower().replace(" ", "-"): int(count)
         for name, count in grouped
         if name
+    }
+
+    defaults = [
+        {
+            **meta,
+            "book_count": counts_by_slug.get(meta["slug"], 0),
+        }
+        for meta in DEFAULT_CATEGORY_META
     ]
+
+    extra_categories = [
+        {
+            "name": name,
+            "slug": slug,
+            "description": "",
+            "book_count": count,
+        }
+        for slug, count in counts_by_slug.items()
+        if slug and slug not in {meta["slug"] for meta in DEFAULT_CATEGORY_META}
+        for name, _ in grouped
+        if (name or "").strip().lower().replace(" ", "-") == slug
+    ]
+
+    return defaults + extra_categories
 
 
 @router.get("/search", response_model=HybridBookListResponse)
