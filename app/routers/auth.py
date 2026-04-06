@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.dependencies import get_db, get_current_user
 from app.schemas.user import UserCreate, UserLogin, Token
 from app.services.auth_service import authenticate_user, create_user, create_access_token
+from app.config import settings
 from app.models.user import User
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
@@ -39,12 +40,14 @@ def login(response: Response, user_data: UserLogin, db: Session = Depends(get_db
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
-    token = create_access_token({"sub": user.username, "role": user.role.value})
+    is_admin = user.role.value == "admin"
+    session_hours = settings.ADMIN_ACCESS_TOKEN_EXPIRE_HOURS if is_admin else settings.ACCESS_TOKEN_EXPIRE_HOURS
+    token = create_access_token({"sub": user.username, "role": user.role.value}, expires_hours=session_hours)
     response.set_cookie(
         key="access_token",
         value=f"Bearer {token}",
         httponly=True,
-        max_age=86400,
+        max_age=session_hours * 3600,
         samesite="lax",
     )
     return {

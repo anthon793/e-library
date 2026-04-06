@@ -11,7 +11,8 @@ class Settings:
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./elibrary.db")
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE", 52428800))  # 50MB
-    ACCESS_TOKEN_EXPIRE_HOURS: int = 24
+    ACCESS_TOKEN_EXPIRE_HOURS: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_HOURS", 24))
+    ADMIN_ACCESS_TOKEN_EXPIRE_HOURS: int = int(os.getenv("ADMIN_ACCESS_TOKEN_EXPIRE_HOURS", 168))
     ALGORITHM: str = "HS256"
     OPEN_LIBRARY_BASE_URL: str = "https://openlibrary.org"
     GOOGLE_BOOKS_API_KEY: str = os.getenv("GOOGLE_BOOKS_API_KEY", "")
