@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
 COPY .env.example ./
-COPY uploads/ ./uploads/
+RUN mkdir -p ./uploads ./uploads/covers
 COPY --from=frontend-build /web/dist ./frontend/dist
 
 EXPOSE 8000
