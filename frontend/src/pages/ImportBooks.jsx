@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getArchiveCategories, triggerAutoImport, getAutoImportStatus } from '../api/client';
+import { getArchiveCategories, triggerAutoImport, getAutoImportStatus, verifyImportedBooks } from '../api/client';
 import { Search, Globe, CheckCircle, BookOpen } from 'lucide-react';
 
 export default function ImportBooks() {
@@ -15,6 +15,8 @@ export default function ImportBooks() {
   const [loading, setLoading] = useState(false);
   const [job, setJob] = useState(null);
   const [status, setStatus] = useState(null);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyResult, setVerifyResult] = useState(null);
 
   useEffect(() => {
     if (!user || (user.role !== 'lecturer' && user.role !== 'admin')) {
@@ -69,6 +71,7 @@ export default function ImportBooks() {
     }
 
     setLoading(true);
+    setVerifyResult(null);
     try {
       const created = await triggerAutoImport(query, categorySlug, field, Number(maxResultsPerSource) || 8);
       setJob(created);
@@ -82,6 +85,23 @@ export default function ImportBooks() {
       if (!job) {
         // keep loading true while background status polls
       }
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!categorySlug) {
+      alert('Select a category first.');
+      return;
+    }
+
+    setVerifyLoading(true);
+    try {
+      const result = await verifyImportedBooks(categorySlug, 25);
+      setVerifyResult(result);
+    } catch {
+      alert('Failed to verify imported books.');
+    } finally {
+      setVerifyLoading(false);
     }
   };
 
@@ -134,7 +154,24 @@ export default function ImportBooks() {
             <p><strong>Errors:</strong> {(status.errors || []).slice(0, 3).join(' | ')}</p>
           )}
           {status.status === 'completed' && (
-            <p className="imported-badge" style={{ marginTop: 8 }}><CheckCircle size={16} /> Completed</p>
+            <>
+              <p className="imported-badge" style={{ marginTop: 8 }}><CheckCircle size={16} /> Completed</p>
+              <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 10 }} onClick={handleVerify} disabled={verifyLoading}>
+                {verifyLoading ? 'Verifying...' : 'Verify Imported Books'}
+              </button>
+            </>
+          )}
+
+          {verifyResult && (
+            <div style={{ marginTop: 12 }}>
+              <h4 style={{ marginBottom: 8 }}>Verification Summary</h4>
+              <p><strong>Total checked:</strong> {verifyResult.total_checked || 0}</p>
+              <p><strong>Working:</strong> {verifyResult.working || 0}</p>
+              <p><strong>Restricted:</strong> {verifyResult.restricted || 0}</p>
+              <p><strong>Missing ID:</strong> {verifyResult.missing_identifier || 0}</p>
+              <p><strong>Not Found:</strong> {verifyResult.not_found || 0}</p>
+              <p><strong>Errors:</strong> {verifyResult.errors || 0}</p>
+            </div>
           )}
         </div>
       ) : (

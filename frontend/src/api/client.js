@@ -248,6 +248,16 @@ export async function getAutoImportStatus(jobId) {
   return data;
 }
 
+export async function verifyImportedBooks(category, limit = 20) {
+  const params = new URLSearchParams({ category, limit: String(limit) });
+  const res = await fetch(`${HYBRID_BASE}/verify-import?${params.toString()}`, {
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Failed to verify imported books');
+  return data;
+}
+
 export async function uploadBook(formData) {
   const res = await fetch(`${HYBRID_BASE}/upload`, {
     method: 'POST',

@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 import httpx
@@ -25,6 +25,7 @@ from app.schemas.hybrid_book import (
 )
 from app.tasks.background_tasks import create_job, get_job, run_auto_import_job
 from app.services.category_policy import normalize_category
+from app.services.google_books import fetch_google_book_volume
 from app.services.revalidator import revalidate_links
 from app.utils.file_storage import save_uploaded_pdf
 
@@ -71,6 +72,22 @@ def _google_embed_url_from_book(book: HybridBook) -> str:
     return ""
 
 
+def _extract_google_volume_id(book: HybridBook) -> str:
+    candidate_links = [book.preview_link or "", book.download_link or ""]
+    for link in candidate_links:
+        if not link:
+            continue
+        parsed = urlparse(link)
+        volume_id = parse_qs(parsed.query).get("id", [""])[0]
+        if volume_id:
+            return volume_id
+
+        if "/volumes/" in parsed.path:
+            return parsed.path.rsplit("/volumes/", 1)[-1].split("/")[0]
+
+    return ""
+
+
 @router.post("/auto-import", response_model=AutoImportResponse)
 def auto_import_books(
     payload: AutoImportRequest,
@@ -111,6 +128,100 @@ def auto_import_status(job_id: str):
         checked_count=job.checked_count,
         errors=job.errors,
     )
+
+
+@router.get("/verify-import")
+async def verify_imported_books(
+    category: str = Query(..., min_length=1),
+    limit: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(require_lecturer),
+    db: Session = Depends(get_db),
+):
+    normalized_category = normalize_category(category) or category
+    category_slug = str(category).strip().lower().replace("_", "-")
+
+    books = (
+        db.query(HybridBook)
+        .filter(
+            or_(
+                HybridBook.category.ilike(f"%{normalized_category}%"),
+                HybridBook.category.ilike(f"%{category_slug}%"),
+            )
+        )
+        .filter(HybridBook.source.ilike("%google books%"))
+        .order_by(HybridBook.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    results = []
+    working = 0
+    missing_identifier = 0
+    restricted = 0
+    not_found = 0
+    errors = 0
+
+    for book in books:
+        volume_id = _extract_google_volume_id(book)
+        if not volume_id:
+            missing_identifier += 1
+            results.append({
+                "id": book.id,
+                "title": book.title,
+                "status": "missing_identifier",
+                "volume_id": "",
+            })
+            continue
+
+        try:
+            payload = await fetch_google_book_volume(volume_id)
+        except Exception:
+            errors += 1
+            results.append({
+                "id": book.id,
+                "title": book.title,
+                "status": "error",
+                "volume_id": volume_id,
+            })
+            continue
+
+        if not payload:
+            not_found += 1
+            results.append({
+                "id": book.id,
+                "title": book.title,
+                "status": "not_found",
+                "volume_id": volume_id,
+            })
+            continue
+
+        if bool(payload.get("preview_available")):
+            working += 1
+            results.append({
+                "id": book.id,
+                "title": book.title,
+                "status": "working",
+                "volume_id": volume_id,
+            })
+        else:
+            restricted += 1
+            results.append({
+                "id": book.id,
+                "title": book.title,
+                "status": "restricted",
+                "volume_id": volume_id,
+            })
+
+    return {
+        "category": normalized_category,
+        "total_checked": len(results),
+        "working": working,
+        "missing_identifier": missing_identifier,
+        "restricted": restricted,
+        "not_found": not_found,
+        "errors": errors,
+        "results": results,
+    }
 
 
 @router.post("/revalidate-links")
