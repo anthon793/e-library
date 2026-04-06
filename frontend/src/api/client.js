@@ -118,7 +118,8 @@ export async function getBooks(skip = 0, limit = 20, category = null) {
   const res = await fetch(url, { credentials: 'include' });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Request failed');
-  return (data.items || []).map(mapHybridBook);
+  const items = Array.isArray(data) ? data : (data.items || []);
+  return items.map(mapHybridBook);
 }
 
 export async function getArchiveBooks(skip = 0, limit = 20, categoryId = null) {
@@ -147,7 +148,8 @@ export async function searchBooks(q, category = null) {
   const res = await fetch(url, { credentials: 'include' });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Request failed');
-  return (data.items || []).map(mapHybridBook);
+  const items = Array.isArray(data) ? data : (data.items || []);
+  return items.map(mapHybridBook);
 }
 
 export async function searchGoogleBooks(q, field = 'all', maxResults = 12) {
