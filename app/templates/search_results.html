@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Search: {{ query }} — Academic E-Library{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <aside class="sidebar">
+    <p class="sidebar-title">Categories</p>
+    <ul class="sidebar-nav">
+      <li><a href="/library"><span class="cat-icon">📚</span> All Books</a></li>
+      {% for cat in categories %}
+      <li><a href="/library?category={{ cat.slug }}"><span class="cat-icon">{{ cat.icon }}</span> {{ cat.name }}</a></li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1>🔍 Search Results</h1>
+      <p>{% if query %}Showing results for "<strong>{{ query }}</strong>" — {{ books | length }} book(s) found{% else %}Enter a search query to find books{% endif %}</p>
+    </div>
+
+    <!-- Search Bar -->
+    <form action="/library/search" method="get" style="margin-bottom:28px;">
+      <div class="import-search">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by title, author, or description..." autofocus>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </div>
+    </form>
+
+    {% if books %}
+    <div class="book-grid">
+      {% for book in books %}
+      <a href="/library/book/{{ book.id }}" class="book-card">
+        <div class="book-cover">
+          {% if book.cover_image %}
+          <img src="{{ book.cover_image }}" alt="{{ book.title }}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="no-cover" style="display:none;">
+            <span class="book-emoji">📚</span>
+            <span class="book-title-overlay">{{ book.title }}</span>
+          </div>
+          {% else %}
+          <div class="no-cover">
+            <span class="book-emoji">📚</span>
+            <span class="book-title-overlay">{{ book.title }}</span>
+          </div>
+          {% endif %}
+          <span class="book-type-badge type-{{ book.book_type.value }}">{{ book.book_type.value }}</span>
+        </div>
+        <div class="book-info">
+          <h3>{{ book.title }}</h3>
+          <p class="book-author">{{ book.author }}</p>
+          <div class="book-meta">
+            <span class="book-category">{{ book.category.name if book.category else 'General' }}</span>
+            <span class="book-downloads">⬇ {{ book.download_count }}</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% elif query %}
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h3>No results found</h3>
+      <p>Try different keywords or browse by category.</p>
+      <a href="/library" class="btn btn-primary" style="margin-top:16px;">Browse Library</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

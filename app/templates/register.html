@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Register — Academic E-Library{% endblock %}
+
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block body %}
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">📚</div>
+      <h1>Create Account</h1>
+      <p>Join the academic library community</p>
+    </div>
+
+    <form onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label for="full_name">Full Name</label>
+        <input type="text" id="full_name" placeholder="Enter your full name" required>
+      </div>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Choose a username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter your email" required>
+      </div>
+
+      <label style="display:block;font-size:0.88rem;font-weight:600;color:var(--gray-700);margin-bottom:8px;">I am a...</label>
+      <div class="role-select">
+        <div class="role-option selected" data-role="student" onclick="selectRole(this)">
+          <div class="role-icon">🎓</div>
+          Student
+        </div>
+        <div class="role-option" data-role="lecturer" onclick="selectRole(this)">
+          <div class="role-icon">👨‍🏫</div>
+          Lecturer
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Create a password" required autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" id="confirm_password" placeholder="Confirm your password" required autocomplete="new-password">
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:8px;">Create Account</button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="/login">Sign in</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

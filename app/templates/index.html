@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Academic E-Library — Your Digital Academic Resource Hub{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-content">
+      <h1 class="font-display">
+        Your Digital<br>
+        <span>Academic Library</span>
+      </h1>
+      <p>
+        Access thousands of academic books in Computer Science, Cybersecurity,
+        Data Science, AI, and more. Search, read, download, and share knowledge
+        — all in one platform.
+      </p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="/library" class="btn btn-accent btn-lg">Browse Library →</a>
+        <a href="/register" class="btn btn-lg" style="background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.2);">Get Started</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="stat-value">{{ total_books }}</div>
+          <div class="stat-label">Books Available</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-value">{{ categories | length }}</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Book Sources</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-book-stack">
+        <div class="hero-book-card">📘</div>
+        <div class="hero-book-card">🔬</div>
+      </div>
+      <div class="hero-book-stack" style="margin-top:30px;">
+        <div class="hero-book-card">🤖</div>
+        <div class="hero-book-card">💻</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Categories Section -->
+<section style="max-width:1400px;margin:0 auto;padding:48px 2rem;">
+  <div class="section-header">
+    <h2>📂 Browse by Category</h2>
+    <a href="/library" class="view-all">View All →</a>
+  </div>
+  <div class="categories-grid">
+    {% for cat in categories %}
+    <a href="/library?category={{ cat.slug }}" class="category-card">
+      <div class="cat-icon">{{ cat.icon }}</div>
+      <div class="cat-name">{{ cat.name }}</div>
+      <div class="cat-count">{{ cat.books | length }} books</div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Recent Books -->
+{% if recent_books %}
+<section style="max-width:1400px;margin:0 auto;padding:0 2rem 48px;">
+  <div class="section-header">
+    <h2>🕐 Recently Added</h2>
+    <a href="/library" class="view-all">View All →</a>
+  </div>
+  <div class="book-grid">
+    {% for book in recent_books %}
+    <a href="/library/book/{{ book.id }}" class="book-card">
+      <div class="book-cover">
+        {% if book.cover_image %}
+        <img src="{{ book.cover_image }}" alt="{{ book.title }}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="no-cover" style="display:none;">
+          <span class="book-emoji">📚</span>
+          <span class="book-title-overlay">{{ book.title }}</span>
+        </div>
+        {% else %}
+        <div class="no-cover">
+          <span class="book-emoji">📚</span>
+          <span class="book-title-overlay">{{ book.title }}</span>
+        </div>
+        {% endif %}
+        <span class="book-type-badge type-{{ book.book_type.value }}">{{ book.book_type.value }}</span>
+      </div>
+      <div class="book-info">
+        <h3>{{ book.title }}</h3>
+        <p class="book-author">{{ book.author }}</p>
+        <div class="book-meta">
+          <span class="book-category">{{ book.category.name if book.category else 'General' }}</span>
+          <span class="book-downloads">⬇ {{ book.download_count }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Popular Books -->
+{% if popular_books %}
+<section style="max-width:1400px;margin:0 auto;padding:0 2rem 60px;">
+  <div class="section-header">
+    <h2>🔥 Most Popular</h2>
+    <a href="/library" class="view-all">View All →</a>
+  </div>
+  <div class="book-grid">
+    {% for book in popular_books %}
+    <a href="/library/book/{{ book.id }}" class="book-card">
+      <div class="book-cover">
+        {% if book.cover_image %}
+        <img src="{{ book.cover_image }}" alt="{{ book.title }}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="no-cover" style="display:none;">
+          <span class="book-emoji">📚</span>
+          <span class="book-title-overlay">{{ book.title }}</span>
+        </div>
+        {% else %}
+        <div class="no-cover">
+          <span class="book-emoji">📚</span>
+          <span class="book-title-overlay">{{ book.title }}</span>
+        </div>
+        {% endif %}
+        <span class="book-type-badge type-{{ book.book_type.value }}">{{ book.book_type.value }}</span>
+      </div>
+      <div class="book-info">
+        <h3>{{ book.title }}</h3>
+        <p class="book-author">{{ book.author }}</p>
+        <div class="book-meta">
+          <span class="book-category">{{ book.category.name if book.category else 'General' }}</span>
+          <span class="book-downloads">⬇ {{ book.download_count }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

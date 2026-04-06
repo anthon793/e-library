@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard — Academic E-Library{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <aside class="sidebar">
+    <p class="sidebar-title">Admin Panel</p>
+    <ul class="sidebar-nav">
+      <li><a href="/admin" class="active"><span class="cat-icon">📊</span> Dashboard</a></li>
+      <li><a href="/admin/books"><span class="cat-icon">📚</span> Manage Books</a></li>
+      <li><a href="/admin/users"><span class="cat-icon">👥</span> Manage Users</a></li>
+    </ul>
+
+    <p class="sidebar-title" style="margin-top:24px;">Quick Links</p>
+    <ul class="sidebar-nav">
+      <li><a href="/library"><span class="cat-icon">📖</span> View Library</a></li>
+      <li><a href="/library/upload"><span class="cat-icon">📤</span> Upload Book</a></li>
+      <li><a href="/library/import"><span class="cat-icon">🌐</span> Import Books</a></li>
+    </ul>
+  </aside>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1>📊 Admin Dashboard</h1>
+      <p>Overview of library activity and statistics</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="admin-stats">
+      <div class="stat-card">
+        <div class="stat-icon icon-books">📚</div>
+        <div class="stat-value">{{ total_books }}</div>
+        <div class="stat-label">Total Books</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-downloads">📥</div>
+        <div class="stat-value">{{ total_downloads }}</div>
+        <div class="stat-label">Total Downloads</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-users">👥</div>
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Registered Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-categories">📂</div>
+        <div class="stat-value">{{ categories | length }}</div>
+        <div class="stat-label">Categories</div>
+      </div>
+    </div>
+
+    <!-- Category Breakdown -->
+    <div class="section-header" style="margin-top:36px;">
+      <h2>📂 Books by Category</h2>
+    </div>
+    <div class="categories-grid" style="margin-bottom:36px;">
+      {% for stat in cat_stats %}
+      <div class="category-card" style="cursor:default;">
+        <div class="cat-icon">{{ stat.icon }}</div>
+        <div class="cat-name">{{ stat.name }}</div>
+        <div class="cat-count" style="font-size:1.5rem;font-weight:700;color:var(--primary);margin-top:8px;">{{ stat.count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Recent Books -->
+    <div class="section-header">
+      <h2>🕐 Recent Uploads</h2>
+      <a href="/admin/books" class="view-all">Manage All →</a>
+    </div>
+
+    {% if recent_books %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Type</th>
+          <th>Downloads</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for book in recent_books %}
+        <tr>
+          <td><a href="/library/book/{{ book.id }}" style="color:var(--primary);font-weight:500;">{{ book.title[:60] }}</a></td>
+          <td>{{ book.author[:40] }}</td>
+          <td><span class="book-type-badge type-{{ book.book_type.value }}" style="position:static;">{{ book.book_type.value }}</span></td>
+          <td>{{ book.download_count }}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="deleteBook({{ book.id }})">Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <p>No books uploaded yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

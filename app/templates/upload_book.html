@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Book — Academic E-Library{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <aside class="sidebar">
+    <p class="sidebar-title">Categories</p>
+    <ul class="sidebar-nav">
+      <li><a href="/library"><span class="cat-icon">📚</span> All Books</a></li>
+      {% for cat in categories %}
+      <li><a href="/library?category={{ cat.slug }}"><span class="cat-icon">{{ cat.icon }}</span> {{ cat.name }}</a></li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <div class="main-content">
+    <div class="upload-container">
+      <div class="page-header">
+        <h1>📤 Add a Book</h1>
+        <p>Upload a PDF or add a Google Drive link to share with students</p>
+      </div>
+
+      <div class="upload-tabs">
+        <button class="upload-tab active" onclick="switchUploadTab('pdf')">📄 Upload PDF</button>
+        <button class="upload-tab" onclick="switchUploadTab('drive')">🔗 Google Drive Link</button>
+      </div>
+
+      <!-- PDF Upload Panel -->
+      <div id="panel-pdf" class="upload-form-panel">
+        <form class="upload-form" onsubmit="handleUploadBook(event)" enctype="multipart/form-data">
+          <div class="file-upload-zone" id="upload-zone">
+            <div class="upload-icon">📁</div>
+            <p>Drag & drop your PDF here or <strong>click to browse</strong></p>
+            <p style="font-size:0.78rem;color:var(--gray-400);margin-top:8px;">Maximum file size: 50MB</p>
+            <input type="file" id="pdf-file" name="file" accept=".pdf" required>
+          </div>
+
+          <div class="form-group">
+            <label for="pdf-title">Book Title</label>
+            <input type="text" id="pdf-title" name="title" placeholder="Enter the book title" required>
+          </div>
+
+          <div class="form-group">
+            <label for="pdf-author">Author</label>
+            <input type="text" id="pdf-author" name="author" placeholder="Enter the author name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="pdf-category">Category</label>
+            <select id="pdf-category" name="category_id" required>
+              <option value="">Select a category</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="pdf-description">Description</label>
+            <textarea id="pdf-description" name="description" placeholder="Brief description of the book..." rows="3"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">Upload Book</button>
+        </form>
+      </div>
+
+      <!-- Drive Link Panel -->
+      <div id="panel-drive" class="upload-form-panel" style="display:none;">
+        <form class="upload-form" onsubmit="handleAddDriveBook(event)">
+          <div class="form-group">
+            <label for="drive-title">Book Title</label>
+            <input type="text" id="drive-title" name="title" placeholder="Enter the book title" required>
+          </div>
+
+          <div class="form-group">
+            <label for="drive-author">Author</label>
+            <input type="text" id="drive-author" name="author" placeholder="Enter the author name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="drive-link">Google Drive / External Link</label>
+            <input type="url" id="drive-link" name="drive_link" placeholder="https://drive.google.com/..." required>
+          </div>
+
+          <div class="form-group">
+            <label for="drive-cover">Cover Image URL (optional)</label>
+            <input type="url" id="drive-cover" name="cover_image" placeholder="https://example.com/cover.jpg">
+          </div>
+
+          <div class="form-group">
+            <label for="drive-category">Category</label>
+            <select id="drive-category" name="category_id" required>
+              <option value="">Select a category</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="drive-description">Description</label>
+            <textarea id="drive-description" name="description" placeholder="Brief description of the book..." rows="3"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">Add Drive Book</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

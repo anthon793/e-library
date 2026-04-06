@@ -1,0 +1,70 @@
+Computer Science
+  - Advances in Computers, Volume 49 (Advances in Computers)
+  - Transactions on Engineering Technologies
+  - Hacking for Dummies
+  - Computational Linguistics and Intelligent Text Processing
+  - Artificial Intelligence and Soft Computing
+  - Intelligent Robotics and Applications
+  - Artificial Intelligence Applications and Innovations
+  - Pattern Recognition
+  - Computer Concepts
+  - Advances in Swarm Intelligence
+
+Cybersecurity
+  - Digital Fortress
+  - Air traffic control
+  - Firewall -- Canadian Book Club
+  - CISSP for dummies
+  - Tax systems modernization
+  - Advances in Intelligent Information Hiding and Multimedia Signal Processing
+  - SAS(R) 9.1.3 Intelligence Platform
+
+Data Science
+  - Qualitative Inquiry and Research Design
+  - Statistical Analysis Of Fmri Data
+  - Calling Bullshit
+  - Data analysis using regression and multilevel/hierarchical models
+  - Swarm Intelligence Methods for Statistical Regression
+  - Test and evaluation of aircraft avionics and weapon systems
+  - Understanding Robust and Exploratory Data Analysis
+  - Sensors in the Age of the Internet of Things
+  - Astronomical data analysis software and systems VI
+  - Die Daten, die ich rief
+
+Artificial Intelligence
+  - Ender's Game
+  - Les Robots
+  - A Torre Negra
+  - Prey
+  - The moon is a harsh mistress
+  - Artificial intelligence
+
+Networking
+  - The Internet for Dummies
+  - Course ILT
+  - Computer Networks
+  - Computer networking
+  - The poetical works of Bret Harte
+  - Business @ the speed of thought
+
+Databases
+  - An Arabian tale
+  - Medea
+  - NASA/DoD aerospace knowledge diffusion research project
+  - De la division du travail social
+  - Les Mandarins
+  - Social security
+  - Food safety
+  - Coast Guard
+  - Financial management
+  - Chaucer
+
+Software Engineering
+  - Software Engineering
+  - Parallel Processing and Applied Mathematics
+  - Computer Information Systems and Industrial Management
+  - Evaluation of Novel Approaches to Software Engineering
+  - Foundations and Practice of Security
+  - Business Modeling and Software Design
+  - Classical and object-oriented software engineering
+

@@ -1,0 +1,85 @@
+Computer Science
+  - Computer Science
+  - Invitation to Computer Science
+  - Mathematical structures for computer science
+  - Signals and Systems
+  - Digital circuit design for computer science students
+  - Data structures, algorithms, and software principles in C
+  - Data structures, algorithms, and performance
+  - Data Structures, Algorithms and Applications in Java
+  - Data structures, algorithms, and applications in C++
+  - Pascal Plus data structures, algorithms, and advanced programming
+
+Cybersecurity
+  - Security+ Guide to Networking Security Fundamentals
+  - Network Security Fundamentals
+  - Network security fundamentals
+  - Network Security Fundamentals
+  - CompTIA Security+ Guide to Network Security Fundamentals
+  - Peter Norton's Network Security Fundamentals
+  - Security+ guide to network security fundamentals
+  - Security+ Guide to Network Security Fundamentals
+  - Hacking for Dummies
+  - The basics of hacking and penetration testing
+
+Data Science
+  - Statistical Learning Using Neural Networks
+  - Learning Python Design Patterns - Second Edition
+  - Pattern Recognition and Machine Learning (Information Science and Statistics)
+  - Python machine learning
+  - Computational Statistics and Machine Learning
+  - Machine Learning and Statistics
+  - Mathematics for Machine Learning
+  - Introduction to Statistical Machine Learning
+  - Machine learning, neural and statistical classification
+  - Statistical data analysis
+
+Artificial Intelligence
+  - Artificial intelligence
+  - Distributed Artificial Intelligence
+  - Multiagent Systems
+  - Multiagent Systems
+  - Multiagent Systems
+  - Multiagent systems
+  - Intelligent Systems
+  - Computer Vision Using Deep Learning
+  - Hands-On Neural Networks with Keras
+  - Applied Neural Networks with TensorFlow 2
+
+Networking
+  - Computer Networks
+  - Computer Networks
+  - High performance TCP/IP networking
+  - TCP/IP networking
+  - TCP/IP networking
+  - Windows NT TCP/IP Network Administration
+  - Managing TCP/IP Networks
+  - Internet and TCP/IP network security
+  - Managing TCP/IP Networks
+  - Computer networking
+
+Databases
+  - Fundamentals of database systems
+  - Fundamentals of database systems
+  - Fundamentals of database systems
+  - Fundamentals of Database Systems, Global Edition
+  - Fundamentals of database systems
+  - Fundamentals of database systems
+  - Fundamentals of database systems
+  - Fundamentals of Database Management Systems
+  - SQL database programming with Java
+  - SQL for Dummies
+
+Software Engineering
+  - Software Engineering
+  - A manager's guide to software engineering
+  - Making software engineering happen
+  - Web engineering
+  - Software engineering
+  - Object-Oriented Software Engineering
+  - Software quality and software testing in Internet times
+  - Software system testing and quality assurance
+  - Software testing and continuous quality improvement
+  - Software Testing
+
+Total: 70

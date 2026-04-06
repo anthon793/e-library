@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} — Academic E-Library{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <aside class="sidebar">
+    <p class="sidebar-title">Categories</p>
+    <ul class="sidebar-nav">
+      <li><a href="/library"><span class="cat-icon">📚</span> All Books</a></li>
+      {% for cat in categories %}
+      <li>
+        <a href="/library?category={{ cat.slug }}" {% if book.category and book.category.id == cat.id %}class="active"{% endif %}>
+          <span class="cat-icon">{{ cat.icon }}</span> {{ cat.name }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <div class="main-content">
+    <div style="margin-bottom:20px;">
+      <a href="/library" style="color:var(--primary);font-size:0.88rem;font-weight:500;">← Back to Library</a>
+    </div>
+
+    <div class="book-detail">
+      <div class="book-detail-header">
+        <div class="book-detail-cover">
+          {% if book.cover_image %}
+          <img src="{{ book.cover_image }}" alt="{{ book.title }}" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="no-cover-detail" style="display:none;">
+            <span class="book-emoji">📚</span>
+            <span class="title-text">{{ book.title }}</span>
+          </div>
+          {% else %}
+          <div class="no-cover-detail">
+            <span class="book-emoji">📚</span>
+            <span class="title-text">{{ book.title }}</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="book-detail-info">
+          <h1>{{ book.title }}</h1>
+          <p class="detail-author">by {{ book.author }}</p>
+
+          <div class="detail-meta">
+            {% if book.category %}
+            <span class="meta-tag meta-category">{{ book.category.name }}</span>
+            {% endif %}
+            <span class="meta-tag meta-type">{{ book.book_type.value | upper }}</span>
+            {% if book.source %}
+            <span class="meta-tag meta-source">{{ book.source }}</span>
+            {% endif %}
+          </div>
+
+          <div class="detail-stats">
+            <div class="detail-stat">
+              <div class="stat-val">{{ book.download_count }}</div>
+              <div class="stat-lbl">Downloads</div>
+            </div>
+            <div class="detail-stat">
+              <div class="stat-val">{{ book.book_type.value | capitalize }}</div>
+              <div class="stat-lbl">Type</div>
+            </div>
+          </div>
+
+          {% if book.description %}
+          <div class="detail-description">
+            {{ book.description }}
+          </div>
+          {% endif %}
+
+          <div class="detail-actions">
+            {% if book.book_type.value == 'upload' and book.file_path %}
+            <button class="btn btn-primary btn-lg" onclick="downloadBook({{ book.id }})">
+              📥 Download PDF
+            </button>
+            {% endif %}
+
+            {% if book.view_link %}
+            <a href="{{ book.view_link }}" target="_blank" class="btn btn-secondary btn-lg">
+              🔗 View Online
+            </a>
+            {% endif %}
+
+            {% if user and user.role.value in ('lecturer', 'admin') %}
+            <button class="btn btn-danger btn-sm" onclick="deleteBook({{ book.id }})" style="margin-left:auto;">
+              🗑️ Delete
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Books -->
+    {% if related_books %}
+    <section style="margin-top:48px;">
+      <div class="section-header">
+        <h2>📖 Related Books</h2>
+      </div>
+      <div class="book-grid">
+        {% for rbook in related_books %}
+        <a href="/library/book/{{ rbook.id }}" class="book-card">
+          <div class="book-cover">
+            {% if rbook.cover_image %}
+            <img src="{{ rbook.cover_image }}" alt="{{ rbook.title }}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="no-cover" style="display:none;">
+              <span class="book-emoji">📚</span>
+              <span class="book-title-overlay">{{ rbook.title }}</span>
+            </div>
+            {% else %}
+            <div class="no-cover">
+              <span class="book-emoji">📚</span>
+              <span class="book-title-overlay">{{ rbook.title }}</span>
+            </div>
+            {% endif %}
+          </div>
+          <div class="book-info">
+            <h3>{{ rbook.title }}</h3>
+            <p class="book-author">{{ rbook.author }}</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

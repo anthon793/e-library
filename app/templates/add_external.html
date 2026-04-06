@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Import from Open Library — Academic E-Library{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <aside class="sidebar">
+    <p class="sidebar-title">Categories</p>
+    <ul class="sidebar-nav">
+      <li><a href="/library"><span class="cat-icon">📚</span> All Books</a></li>
+      {% for cat in categories %}
+      <li><a href="/library?category={{ cat.slug }}"><span class="cat-icon">{{ cat.icon }}</span> {{ cat.name }}</a></li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <div class="main-content">
+    <div class="import-container">
+      <div class="page-header">
+        <h1>🌐 Import from Open Library</h1>
+        <p>Search the Open Library database and import books directly into your institutional library</p>
+      </div>
+
+      <!-- Category for imported books -->
+      <div class="form-group" style="max-width:300px;margin-bottom:24px;">
+        <label for="import-category">Import into Category</label>
+        <select id="import-category" required>
+          <option value="">Select category</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Search Bar -->
+      <form onsubmit="searchOpenLibrary(event)" class="import-search">
+        <input type="text" id="import-search-input" placeholder="Search for books... (e.g. 'Python programming', 'Machine Learning')" autofocus>
+        <button type="submit" class="btn btn-primary">🔍 Search</button>
+      </form>
+
+      <!-- Results -->
+      <div id="import-results" class="import-results">
+        <div class="empty-state">
+          <div class="empty-icon">🌐</div>
+          <h3>Search Open Library</h3>
+          <p>Enter a search term above to find books from the Open Library collection.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Library — Academic E-Library{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <p class="sidebar-title">Categories</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="/library" {% if not active_category %}class="active"{% endif %}>
+          <span class="cat-icon">📚</span>
+          All Books
+          <span class="cat-count">{{ total }}</span>
+        </a>
+      </li>
+      {% for cat in categories %}
+      <li>
+        <a href="/library?category={{ cat.slug }}" {% if active_category and active_category.id == cat.id %}class="active"{% endif %}>
+          <span class="cat-icon">{{ cat.icon }}</span>
+          {{ cat.name }}
+          <span class="cat-count">{{ cat.books | length }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% if user and user.role.value in ('lecturer', 'admin') %}
+    <p class="sidebar-title" style="margin-top:16px;">Quick Actions</p>
+    <ul class="sidebar-nav">
+      <li><a href="/library/upload"><span class="cat-icon">📤</span> Upload PDF</a></li>
+      <li><a href="/library/import"><span class="cat-icon">🌐</span> Import from API</a></li>
+    </ul>
+    {% endif %}
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="page-header">
+      <h1>{% if active_category %}{{ active_category.icon }} {{ active_category.name }}{% else %}📖 All Books{% endif %}</h1>
+      <p>{% if active_category %}{{ active_category.description }}{% else %}Browse our complete collection of academic books{% endif %}</p>
+    </div>
+
+    {% if books %}
+    <div class="book-grid">
+      {% for book in books %}
+      <a href="/library/book/{{ book.id }}" class="book-card">
+        <div class="book-cover">
+          {% if book.cover_image %}
+          <img src="{{ book.cover_image }}" alt="{{ book.title }}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="no-cover" style="display:none;">
+            <span class="book-emoji">📚</span>
+            <span class="book-title-overlay">{{ book.title }}</span>
+          </div>
+          {% else %}
+          <div class="no-cover">
+            <span class="book-emoji">📚</span>
+            <span class="book-title-overlay">{{ book.title }}</span>
+          </div>
+          {% endif %}
+          <span class="book-type-badge type-{{ book.book_type.value }}">{{ book.book_type.value }}</span>
+        </div>
+        <div class="book-info">
+          <h3>{{ book.title }}</h3>
+          <p class="book-author">{{ book.author }}</p>
+          <div class="book-meta">
+            <span class="book-category">{{ book.category.name if book.category else 'General' }}</span>
+            <span class="book-downloads">⬇ {{ book.download_count }}</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      {% if page > 1 %}
+      <a href="/library?page={{ page - 1 }}{% if active_category %}&category={{ active_category.slug }}{% endif %}">← Prev</a>
+      {% endif %}
+      <span class="active">{{ page }}</span>
+      {% if has_next %}
+      <a href="/library?page={{ page + 1 }}{% if active_category %}&category={{ active_category.slug }}{% endif %}">Next →</a>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📚</div>
+      <h3>No books found</h3>
+      <p>{% if active_category %}No books in this category yet.{% else %}The library is empty. Start by importing or uploading books.{% endif %}</p>
+      {% if user and user.role.value in ('lecturer', 'admin') %}
+      <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
+        <a href="/library/upload" class="btn btn-primary">Upload Book</a>
+        <a href="/library/import" class="btn btn-secondary">Import from API</a>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

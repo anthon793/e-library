@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Academic E-Library — Access, download, and share academic books in Computer Science, AI, Cybersecurity, and more.">
+  <title>{% block title %}Academic E-Library{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% block navbar %}
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="/" class="navbar-brand">
+        <div class="logo-icon">📚</div>
+        <span>E-Library</span>
+      </a>
+
+      <div class="navbar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search books, authors..." onkeydown="handleSearch(event)" id="global-search">
+      </div>
+
+      <ul class="navbar-links">
+        <li><a href="/" {% if request.url.path == '/' %}class="active"{% endif %}>Home</a></li>
+        <li><a href="/library" {% if '/library' in request.url.path and '/upload' not in request.url.path and '/import' not in request.url.path %}class="active"{% endif %}>Library</a></li>
+        {% if user and user.role.value in ('lecturer', 'admin') %}
+        <li><a href="/library/upload" {% if '/upload' in request.url.path %}class="active"{% endif %}>Upload</a></li>
+        <li><a href="/library/import" {% if '/import' in request.url.path %}class="active"{% endif %}>Import</a></li>
+        {% endif %}
+        {% if user and user.role.value == 'admin' %}
+        <li><a href="/admin" {% if '/admin' in request.url.path %}class="active"{% endif %}>Admin</a></li>
+        {% endif %}
+      </ul>
+
+      <div class="navbar-user">
+        {% if user %}
+          <div class="user-avatar">{{ user.full_name[0] | upper }}</div>
+          <div>
+            <div class="user-name">{{ user.full_name }}</div>
+            <div class="user-role">{{ user.role.value }}</div>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white;margin-left:8px;" onclick="handleLogout()">Logout</button>
+        {% else %}
+          <a href="/login" class="btn btn-sm" style="background:rgba(255,255,255,0.12);color:white;">Login</a>
+          <a href="/register" class="btn btn-sm btn-accent">Register</a>
+        {% endif %}
+      </div>
+
+      <button class="mobile-toggle" onclick="toggleMobileMenu()">☰</button>
+    </div>
+  </nav>
+  {% endblock %}
+
+  {% block body %}
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  {% endblock %}
+
+  {% block footer %}
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">📚 Academic E-Library</div>
+      <p>&copy; 2026 Academic E-Library System. All rights reserved.</p>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <div class="toast-container"></div>
+
+  <script src="/static/js/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

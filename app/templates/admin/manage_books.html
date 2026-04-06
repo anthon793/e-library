@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Books — Admin — Academic E-Library{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <aside class="sidebar">
+    <p class="sidebar-title">Admin Panel</p>
+    <ul class="sidebar-nav">
+      <li><a href="/admin"><span class="cat-icon">📊</span> Dashboard</a></li>
+      <li><a href="/admin/books" class="active"><span class="cat-icon">📚</span> Manage Books</a></li>
+      <li><a href="/admin/users"><span class="cat-icon">👥</span> Manage Users</a></li>
+    </ul>
+  </aside>
+
+  <div class="main-content">
+    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1>📚 Manage Books</h1>
+        <p>{{ books | length }} books in the library</p>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <a href="/library/upload" class="btn btn-primary">📤 Upload</a>
+        <a href="/library/import" class="btn btn-secondary">🌐 Import</a>
+      </div>
+    </div>
+
+    {% if books %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Category</th>
+          <th>Type</th>
+          <th>Source</th>
+          <th>Downloads</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for book in books %}
+        <tr>
+          <td>
+            <a href="/library/book/{{ book.id }}" style="color:var(--primary);font-weight:500;">
+              {{ book.title[:50] }}{% if book.title|length > 50 %}...{% endif %}
+            </a>
+          </td>
+          <td>{{ book.author[:30] }}{% if book.author|length > 30 %}...{% endif %}</td>
+          <td>{{ book.category.name if book.category else '—' }}</td>
+          <td><span class="book-type-badge type-{{ book.book_type.value }}" style="position:static;">{{ book.book_type.value }}</span></td>
+          <td style="font-size:0.82rem;">{{ book.source or '—' }}</td>
+          <td>{{ book.download_count }}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <a href="/library/book/{{ book.id }}" class="btn btn-secondary btn-sm">View</a>
+              <button class="btn btn-danger btn-sm" onclick="deleteBook({{ book.id }})">Delete</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📚</div>
+      <h3>No books in the library</h3>
+      <p>Start by uploading or importing books.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
