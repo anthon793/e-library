@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getStats, getBooks, getArchiveCategories, deleteBook as deleteBookApi } from '../api/client';
 import { BookOpen, Users, Layers, Trash2, Eye, Shield, BarChart3, Brain, Network, Code } from 'lucide-react';
+import Modal from '../components/Modal';
 
 const CATEGORY_ICONS = {
   'cybersecurity': Shield,
@@ -41,6 +42,8 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ total_books: 0, total_sources: 0 });
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, bookId: null, bookTitle: '' });
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (loading) {
@@ -59,14 +62,27 @@ export default function AdminDashboard() {
     return <div className="page-header"><h1>Loading...</h1></div>;
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this book?')) return;
+  const handleDelete = (id) => {
+    const book = books.find((b) => b.id === id);
+    setDeleteModal({
+      isOpen: true,
+      bookId: id,
+      bookTitle: book?.title || 'Unknown',
+    });
+  };
+
+  const confirmDelete = async () => {
+    const { bookId } = deleteModal;
+    setDeleting(true);
     try {
-      await deleteBookApi(id);
-      setBooks((prev) => prev.filter((b) => b.id !== id));
+      await deleteBookApi(bookId);
+      setBooks((prev) => prev.filter((b) => b.id !== bookId));
       setStats((prev) => ({ ...prev, total_books: prev.total_books - 1 }));
+      setDeleteModal({ isOpen: false, bookId: null, bookTitle: '' });
     } catch (err) {
       alert(err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -160,6 +176,20 @@ export default function AdminDashboard() {
           <div className="empty-state"><h3>No books</h3></div>
         )}
       </div>
+
+      <Modal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, bookId: null, bookTitle: '' })}
+        title="Delete Book"
+        isDanger={true}
+        isLoading={deleting}
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+      >
+        <p>Are you sure you want to delete this book?</p>
+        <p><strong>{deleteModal.bookTitle}</strong></p>
+        <p style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--gray-500)' }}>This action cannot be undone.</p>
+      </Modal>
     </div>
   );
 }

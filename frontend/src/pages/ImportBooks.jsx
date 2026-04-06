@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getArchiveCategories, triggerAutoImport, getAutoImportStatus, verifyImportedBooks, cleanupOfftopicBooks, cleanupPreviewUnavailableBooks } from '../api/client';
 import { Search, Globe, CheckCircle, BookOpen } from 'lucide-react';
+import Modal from '../components/Modal';
 
 export default function ImportBooks() {
   const { user, loading: authLoading } = useAuth();
@@ -19,6 +20,8 @@ export default function ImportBooks() {
   const [verifyResult, setVerifyResult] = useState(null);
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [previewCleanupLoading, setPreviewCleanupLoading] = useState(false);
+  const [importModal, setImportModal] = useState({ isOpen: false, details: null });
+  const [cleanupModal, setCleanupModal] = useState({ isOpen: false, type: null });
 
   useEffect(() => {
     if (authLoading) {
@@ -66,25 +69,25 @@ export default function ImportBooks() {
     }
 
     const selectedCategory = categories.find((c) => c.slug === categorySlug);
-    const confirmMessage = [
-      'Start Google Books import?',
-      `Query: ${query.trim()}`,
-      `Field: ${field}`,
-      `Category: ${selectedCategory?.name || categorySlug}`,
-      `Max results: ${Number(maxResultsPerSource) || 8}`,
-      'This will import Google Books only and add the books to the library with the selected category tag.',
-    ].join('\n');
+    setImportModal({
+      isOpen: true,
+      details: {
+        query: query.trim(),
+        field,
+        category: selectedCategory?.name || categorySlug,
+        maxResults: Number(maxResultsPerSource) || 8,
+      },
+    });
+  };
 
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-
+  const confirmImport = async () => {
     setLoading(true);
     setVerifyResult(null);
     try {
       const created = await triggerAutoImport(query, categorySlug, field, Number(maxResultsPerSource) || 8);
       setJob(created);
       setStatus({ status: created.status, imported_count: 0, checked_count: 0, errors: [] });
+      setImportModal({ isOpen: false, details: null });
     } catch {
       setStatus(null);
       setJob(null);
@@ -119,19 +122,34 @@ export default function ImportBooks() {
       alert('Select a category first.');
       return;
     }
+    setCleanupModal({ isOpen: true, type: 'offtopic' });
+  };
 
-    if (!window.confirm('Remove off-topic Google books from this category?')) {
-      return;
-    }
-
-    setCleanupLoading(true);
-    try {
-      const result = await cleanupOfftopicBooks(categorySlug);
-      alert(`Cleanup complete. Matched ${result.matched || 0} books and removed ${result.removed || 0} off-topic books.`);
-    } catch {
-      alert('Failed to clean off-topic books.');
-    } finally {
-      setCleanupLoading(false);
+  const confirmCleanup = async () => {
+    const { type } = cleanupModal;
+    
+    if (type === 'offtopic') {
+      setCleanupLoading(true);
+      try {
+        const result = await cleanupOfftopicBooks(categorySlug);
+        alert(`Cleanup complete. Matched ${result.matched || 0} books and removed ${result.removed || 0} off-topic books.`);
+      } catch {
+        alert('Failed to clean off-topic books.');
+      } finally {
+        setCleanupLoading(false);
+        setCleanupModal({ isOpen: false, type: null });
+      }
+    } else if (type === 'preview') {
+      setPreviewCleanupLoading(true);
+      try {
+        const result = await cleanupPreviewUnavailableBooks(categorySlug);
+        alert(`Preview cleanup complete. Matched ${result.matched || 0} books and removed ${result.removed || 0}.`);
+      } catch {
+        alert('Failed to clean preview-unavailable books.');
+      } finally {
+        setPreviewCleanupLoading(false);
+        setCleanupModal({ isOpen: false, type: null });
+      }
     }
   };
 
@@ -140,20 +158,7 @@ export default function ImportBooks() {
       alert('Select a category first.');
       return;
     }
-
-    if (!window.confirm('Remove books where Google Books preview is unavailable for this category?')) {
-      return;
-    }
-
-    setPreviewCleanupLoading(true);
-    try {
-      const result = await cleanupPreviewUnavailableBooks(categorySlug);
-      alert(`Preview cleanup complete. Matched ${result.matched || 0} books and removed ${result.removed || 0}.`);
-    } catch {
-      alert('Failed to clean preview-unavailable books.');
-    } finally {
-      setPreviewCleanupLoading(false);
-    }
+    setCleanupModal({ isOpen: true, type: 'preview' });
   };
 
   return (
@@ -241,6 +246,53 @@ export default function ImportBooks() {
           <p>Enter a query, choose a field and category, then confirm to import Google Books into the library.</p>
         </div>
       )}
+
+      <Modal
+        isOpen={importModal.isOpen}
+        onClose={() => setImportModal({ isOpen: false, details: null })}
+        title="Start Google Books Import"
+        confirmText="Import"
+        isLoading={loading}
+        onConfirm={confirmImport}
+      >
+        {importModal.details && (
+          <div>
+            <p><strong>Query:</strong> {importModal.details.query}</p>
+            <p><strong>Field:</strong> {importModal.details.field}</p>
+            <p><strong>Category:</strong> {importModal.details.category}</p>
+            <p><strong>Max Results:</strong> {importModal.details.maxResults}</p>
+            <p style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--gray-500)' }}>
+              This will import Google Books only and add the books to the library with the selected category tag.
+            </p>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={cleanupModal.isOpen}
+        onClose={() => setCleanupModal({ isOpen: false, type: null })}
+        title={cleanupModal.type === 'offtopic' ? 'Remove Off-Topic Books' : 'Remove Books with Unavailable Preview'}
+        confirmText="Remove"
+        isDanger={true}
+        isLoading={cleanupLoading || previewCleanupLoading}
+        onConfirm={confirmCleanup}
+      >
+        {cleanupModal.type === 'offtopic' ? (
+          <div>
+            <p>Remove off-topic Google books from this category?</p>
+            <p style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--gray-500)' }}>
+              This will analyze books in the selected category and remove those that don't match the category topic.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p>Remove books where Google Books preview is unavailable?</p>
+            <p style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--gray-500)' }}>
+              This will remove books from this category that don't have preview content available in Google Books.
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

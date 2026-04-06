@@ -88,7 +88,7 @@ export default function Sidebar({ onNavigate = null }) {
       {/* Brand */}
       <div className="sidebar-brand">
         <div className="sidebar-logo">
-          <BookOpen size={22} />
+          <img src="/vuna.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <div>
           <div className="sidebar-brand-name">E-Library</div>
