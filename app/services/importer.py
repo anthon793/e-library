@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -9,39 +8,22 @@ from sqlalchemy.orm import Session
 from app import crud
 from app.models.hybrid_book import HybridBook
 from app.services.category_policy import normalize_category
-from app.services.doab import search_doab
 from app.services.google_books import search_google_books
-from app.services.gutenberg import search_gutenberg
-from app.services.open_library_hybrid import search_open_library_hybrid
-from app.services.openstax import search_openstax
-from app.services.pdf_validator import validate_pdf_link
-from app.utils.file_storage import download_cover_image
-from app.utils.link_extractor import extract_candidate_links, pick_pdf_like_links
 
 logger = logging.getLogger("hybrid_importer")
 
 
-async def _run_source(name: str, coro):
+async def fetch_google_metadata(query: str, max_results_per_source: int, field: str) -> list[dict]:
     try:
-        return await coro
-    except Exception as exc:  # defensive per-source isolation
-        logger.warning("source_failed name=%s err=%s", name, exc)
+        return await search_google_books(
+            query,
+            max_results=max_results_per_source,
+            field=field,
+            pdf_only=False,
+        )
+    except Exception as exc:
+        logger.warning("google_books_failed err=%s", exc)
         return []
-
-
-async def fetch_external_metadata(query: str, max_results_per_source: int) -> list[dict]:
-    tasks = [
-        _run_source("google_books", search_google_books(query, max_results_per_source)),
-        _run_source("open_library", search_open_library_hybrid(query, max_results_per_source)),
-        _run_source("doab", search_doab(query, max_results_per_source)),
-        _run_source("openstax", search_openstax(query, max_results_per_source)),
-        _run_source("gutenberg", search_gutenberg(query, max_results_per_source)),
-    ]
-    groups = await asyncio.gather(*tasks)
-    merged: list[dict] = []
-    for group in groups:
-        merged.extend(group)
-    return merged
 
 
 async def import_verified_books(
@@ -49,6 +31,7 @@ async def import_verified_books(
     *,
     query: str,
     category: str,
+    field: str,
     max_results_per_source: int,
 ) -> tuple[int, int, list[str]]:
     checked_count = 0
@@ -59,51 +42,39 @@ async def import_verified_books(
     if not normalized_category:
         return 0, 0, ["invalid_category"]
 
-    raw_books = await fetch_external_metadata(query, max_results_per_source)
+    raw_books = await fetch_google_metadata(query, max_results_per_source, field)
 
     for candidate in raw_books:
-        links = extract_candidate_links(candidate)
-        links = pick_pdf_like_links(links) or links
+        checked_count += 1
 
-        validated_link = ""
-        file_size = 0
-
-        for link in links:
-            checked_count += 1
-            result = await validate_pdf_link(link)
-            if result.is_valid:
-                validated_link = link
-                file_size = result.file_size
-                break
-
-        if not validated_link:
+        if not candidate.get("embeddable") and not candidate.get("preview_available"):
             continue
 
         title = candidate.get("title", "Unknown Title")
         author = candidate.get("author", "Unknown Author")
-        preview_link = candidate.get("preview_link", "") or ""
+        preview_link = candidate.get("preview_link", "") or candidate.get("viewer_link", "") or ""
+        download_link = preview_link or candidate.get("viewer_link", "") or candidate.get("info_link", "") or ""
+        file_size = 0
 
-        existing = crud.get_duplicate(db, title=title, author=author, download_link=validated_link)
+        existing = crud.get_duplicate(db, title=title, author=author, download_link=download_link)
         if existing:
             continue
 
         try:
-            cover = candidate.get("cover_image", "") or ""
-            local_cover = await download_cover_image(cover)
             crud.create_hybrid_book(
                 db,
                 title=title,
                 author=author,
                 description=candidate.get("description", "") or "No description provided.",
                 category=normalized_category,
-                cover_image=local_cover or cover,
+                cover_image=candidate.get("cover_image", "") or candidate.get("thumbnail", "") or "",
                 preview_link=preview_link,
-                download_link=validated_link,
-                source=candidate.get("source", "Unknown"),
-                is_verified=True,
+                download_link=download_link,
+                source=candidate.get("source", "Google Books"),
+                is_verified=bool(candidate.get("embeddable") or candidate.get("preview_available")),
                 file_size=file_size,
                 publisher=candidate.get("publisher", ""),
-                published_year=candidate.get("published_year", ""),
+                published_year=candidate.get("published_date", "") or candidate.get("published_year", ""),
                 created_at=datetime.now(timezone.utc),
                 last_checked=datetime.now(timezone.utc),
             )

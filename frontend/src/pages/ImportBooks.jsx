@@ -10,6 +10,7 @@ export default function ImportBooks() {
   const [query, setQuery] = useState('');
   const [categories, setCategories] = useState([]);
   const [categorySlug, setCategorySlug] = useState('');
+  const [field, setField] = useState('subject');
   const [maxResultsPerSource, setMaxResultsPerSource] = useState(8);
   const [loading, setLoading] = useState(false);
   const [job, setJob] = useState(null);
@@ -53,9 +54,23 @@ export default function ImportBooks() {
       return;
     }
 
+    const selectedCategory = categories.find((c) => c.slug === categorySlug);
+    const confirmMessage = [
+      'Start Google Books import?',
+      `Query: ${query.trim()}`,
+      `Field: ${field}`,
+      `Category: ${selectedCategory?.name || categorySlug}`,
+      `Max results per source: ${Number(maxResultsPerSource) || 8}`,
+      'This will import Google Books only and add the books to the library with the selected category tag.',
+    ].join('\n');
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
     setLoading(true);
     try {
-      const created = await triggerAutoImport(query, categorySlug, Number(maxResultsPerSource) || 8);
+      const created = await triggerAutoImport(query, categorySlug, field, Number(maxResultsPerSource) || 8);
       setJob(created);
       setStatus({ status: created.status, imported_count: 0, checked_count: 0, errors: [] });
     } catch {
@@ -73,8 +88,8 @@ export default function ImportBooks() {
   return (
     <div>
       <div className="page-header">
-        <h1>Hybrid Auto Import</h1>
-        <p className="page-subtitle">Fetch metadata from multiple sources, validate PDF links, and store verified books</p>
+        <h1>Google Books Auto Import</h1>
+        <p className="page-subtitle">Fetch Google Books only, confirm the import, and store tagged books in the library</p>
       </div>
 
       <div className="form-group" style={{ maxWidth: 280, marginBottom: 16 }}>
@@ -82,6 +97,17 @@ export default function ImportBooks() {
         <select value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} required>
           <option value="">Select category</option>
           {categories.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+        </select>
+      </div>
+
+      <div className="form-group" style={{ maxWidth: 280, marginBottom: 16 }}>
+        <label>Google Books Field</label>
+        <select value={field} onChange={(e) => setField(e.target.value)} required>
+          <option value="all">All</option>
+          <option value="subject">Subject</option>
+          <option value="title">Title</option>
+          <option value="author">Author</option>
+          <option value="isbn">ISBN</option>
         </select>
       </div>
 
@@ -95,15 +121,15 @@ export default function ImportBooks() {
           <Search size={18} className="search-input-icon" />
           <input type="text" placeholder="Search query (e.g. machine learning, cybersecurity)" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
         </div>
-        <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Importing...' : 'Start Auto Import'}</button>
+        <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Importing...' : 'Start Google Import'}</button>
       </form>
 
       {status ? (
         <div className="card" style={{ padding: 16, marginTop: 16 }}>
           <h3 style={{ marginBottom: 8 }}>Import Job Status</h3>
           <p><strong>State:</strong> {status.status}</p>
-          <p><strong>Checked PDF Links:</strong> {status.checked_count || 0}</p>
-          <p><strong>Imported Verified Books:</strong> {status.imported_count || 0}</p>
+          <p><strong>Checked Google Results:</strong> {status.checked_count || 0}</p>
+          <p><strong>Imported Books:</strong> {status.imported_count || 0}</p>
           {(status.errors || []).length > 0 && (
             <p><strong>Errors:</strong> {(status.errors || []).slice(0, 3).join(' | ')}</p>
           )}
@@ -114,8 +140,8 @@ export default function ImportBooks() {
       ) : (
         <div className="empty-state">
           <Globe size={48} strokeWidth={1} />
-          <h3>Start Hybrid Import</h3>
-          <p>Enter a query to fetch books from multiple sources and store only verified PDFs.</p>
+          <h3>Start Google Books Import</h3>
+          <p>Enter a query, choose a field and category, then confirm to import Google Books into the library.</p>
         </div>
       )}
     </div>

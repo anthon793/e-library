@@ -36,7 +36,7 @@ def get_job(job_id: str) -> ImportJob | None:
     return IMPORT_JOBS.get(job_id)
 
 
-def run_auto_import_job(job_id: str, query: str, category: str, max_results_per_source: int) -> None:
+def run_auto_import_job(job_id: str, query: str, category: str, field: str, max_results_per_source: int) -> None:
     job = IMPORT_JOBS.get(job_id)
     if not job:
         return
@@ -50,6 +50,7 @@ def run_auto_import_job(job_id: str, query: str, category: str, max_results_per_
                 db,
                 query=query,
                 category=category,
+                field=field,
                 max_results_per_source=max_results_per_source,
             )
         )

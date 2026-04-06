@@ -227,12 +227,12 @@ export async function importFromArchive(archiveId, categoryId) {
   return data;
 }
 
-export async function triggerAutoImport(query, category, maxResultsPerSource = 8) {
+export async function triggerAutoImport(query, category, field = 'all', maxResultsPerSource = 8) {
   const res = await fetch(`${HYBRID_BASE}/auto-import`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, category, max_results_per_source: maxResultsPerSource }),
+    body: JSON.stringify({ query, category, field, max_results_per_source: maxResultsPerSource }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Auto-import failed');

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class AutoImportRequest(BaseModel):
     query: str = Field(min_length=2)
     category: Optional[str] = ""
+    field: str = Field(default="all")
     max_results_per_source: int = Field(default=8, ge=1, le=30)
 
 

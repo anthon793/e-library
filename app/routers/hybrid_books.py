@@ -81,15 +81,20 @@ def auto_import_books(
     if not normalized_category:
         raise HTTPException(status_code=400, detail="Category must be one of: cybersecurity, data-science, artificial-intelligence")
 
+    normalized_field = (payload.field or "all").strip().lower()
+    if normalized_field not in {"all", "title", "author", "isbn", "subject"}:
+        raise HTTPException(status_code=400, detail="Field must be one of: all, title, author, isbn, subject")
+
     job = create_job(payload.query)
     background_tasks.add_task(
         run_auto_import_job,
         job.job_id,
         payload.query,
         normalized_category,
+        normalized_field,
         payload.max_results_per_source,
     )
-    return AutoImportResponse(job_id=job.job_id, status=job.status, message="Auto-import started")
+    return AutoImportResponse(job_id=job.job_id, status=job.status, message="Google Books import started")
 
 
 @router.get("/auto-import/{job_id}", response_model=ImportJobStatus)
