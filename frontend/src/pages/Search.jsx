@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { searchBooks } from '../api/client';
+import { getBooks, searchBooks } from '../api/client';
 import BookCard from '../components/BookCard';
 import { Search as SearchIcon, BookOpen, SlidersHorizontal } from 'lucide-react';
 
 const SEARCH_FIELDS = [
+  { value: 'all', label: 'ALL' },
   { value: 'cybersecurity', label: 'Cybersecurity' },
   { value: 'data-science', label: 'Data Science' },
   { value: 'artificial-intelligence', label: 'Artificial Intelligence' },
@@ -13,29 +14,73 @@ const SEARCH_FIELDS = [
 ];
 
 export default function Search() {
+  const PAGE_SIZE = 100;
+  const MAX_PAGES = 30;
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
-  const [field, setField] = useState(searchParams.get('field') || 'cybersecurity');
+  const [field, setField] = useState(searchParams.get('field') || 'all');
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(Boolean(searchParams.get('q')));
 
   useEffect(() => {
     const q = searchParams.get('q');
-    const nextField = searchParams.get('field') || 'cybersecurity';
+    const nextField = searchParams.get('field') || 'all';
     setField(nextField);
+    setSearched(Boolean(q));
+
     if (q) {
       setQuery(q);
       doSearch(q, nextField);
+      return;
     }
+
+    setQuery('');
+    loadBooksByField(nextField);
   }, [searchParams]);
 
+  const getAllBooksForCategory = async (category = null) => {
+    const allItems = [];
+    let page = 0;
+
+    while (page < MAX_PAGES) {
+      const skip = page * PAGE_SIZE;
+      const chunk = await getBooks(skip, PAGE_SIZE, category);
+      if (!Array.isArray(chunk) || chunk.length === 0) break;
+
+      allItems.push(...chunk);
+      if (chunk.length < PAGE_SIZE) break;
+      page += 1;
+    }
+
+    return allItems;
+  };
+
+  const loadBooksByField = async (nextField = field) => {
+    setLoading(true);
+    try {
+      const category = nextField === 'all' ? null : nextField;
+      const results = await getAllBooksForCategory(category);
+      setBooks(results);
+    } catch {
+      setBooks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const doSearch = async (q, nextField = field) => {
-    if (!q.trim()) return;
+    if (!q.trim()) {
+      await loadBooksByField(nextField);
+      return;
+    }
+
     setLoading(true);
     setSearched(true);
     try {
-      const results = await searchBooks(q, nextField);
+      const category = nextField === 'all' ? null : nextField;
+      const results = await searchBooks(q, category);
       setBooks(results);
     } catch {
       setBooks([]);
@@ -47,12 +92,35 @@ export default function Search() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    params.set('q', query);
+    if (query.trim()) {
+      params.set('q', query.trim());
+    }
     if (field && field !== 'all') {
       params.set('field', field);
     }
     setSearchParams(params);
     doSearch(query, field);
+  };
+
+  const handleFieldChange = (nextField) => {
+    setField(nextField);
+
+    const params = new URLSearchParams();
+    if (query.trim()) {
+      params.set('q', query.trim());
+    }
+    if (nextField !== 'all') {
+      params.set('field', nextField);
+    }
+    setSearchParams(params);
+
+    if (query.trim()) {
+      doSearch(query, nextField);
+      return;
+    }
+
+    setSearched(false);
+    loadBooksByField(nextField);
   };
 
   return (
@@ -65,7 +133,7 @@ export default function Search() {
       <form className="search-form" onSubmit={handleSubmit}>
         <div className="search-field-wrap">
           <SlidersHorizontal size={16} className="search-input-icon" />
-          <select value={field} onChange={(e) => setField(e.target.value)} className="search-select">
+          <select value={field} onChange={(e) => handleFieldChange(e.target.value)} className="search-select">
             {SEARCH_FIELDS.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
@@ -85,7 +153,7 @@ export default function Search() {
       </form>
 
       <p className="search-hint">
-        Results come from your internal library database and are filtered by the selected field.
+        ALL shows all books by default. Selecting a field shows only books for that field before you type.
       </p>
 
       {loading ? (
@@ -93,7 +161,9 @@ export default function Search() {
       ) : books.length > 0 ? (
         <>
           <p style={{ color: '#6B7280', marginBottom: 20, fontSize: '0.9rem' }}>
-            Found <strong>{books.length}</strong> result(s) for "<strong>{searchParams.get('q')}</strong>" in <strong>{SEARCH_FIELDS.find((f) => f.value === field)?.label || field}</strong>
+            {searched
+              ? <>Found <strong>{books.length}</strong> result(s) for "<strong>{query}</strong>" in <strong>{SEARCH_FIELDS.find((f) => f.value === field)?.label || field}</strong></>
+              : <>Showing <strong>{books.length}</strong> book(s) in <strong>{SEARCH_FIELDS.find((f) => f.value === field)?.label || field}</strong></>}
           </p>
           <div className="book-grid">
             {books.map((book) => <BookCard key={book.id} book={book} />)}
@@ -108,8 +178,8 @@ export default function Search() {
       ) : (
         <div className="empty-state">
           <BookOpen size={48} strokeWidth={1} />
-          <h3>Search Library Books</h3>
-          <p>Enter a search term to find books from your library by the selected field.</p>
+          <h3>No books in this filter</h3>
+          <p>Try switching to ALL or another field.</p>
         </div>
       )}
     </div>
